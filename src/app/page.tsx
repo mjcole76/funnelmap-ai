@@ -1,65 +1,160 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { ReactFlowProvider, useNodesState, useEdgesState, addEdge, Connection, Edge, Node, NodeChange, EdgeChange } from '@xyflow/react';
+import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
+import Canvas from '../components/Canvas';
+import AnalyticsPanel from '../components/AnalyticsPanel';
+import SettingsDrawer from '../components/SettingsDrawer';
+import PreviewModal from '../components/PreviewModal';
+
+const STORAGE_KEY = 'funnelmap-ai-state';
+
+function FunnelMapInner() {
+  const [nodes, setNodes, onNodesChangeCore] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChangeCore] = useEdgesState<Edge>([]);
+  
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [editingNode, setEditingNode] = useState<Node | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const [isPublished, setIsPublished] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.nodes) setNodes(parsed.nodes);
+        if (parsed.edges) setEdges(parsed.edges);
+        if (parsed.isPublished) setIsPublished(parsed.isPublished);
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    setIsLoaded(true);
+  }, [setNodes, setEdges]);
+
+  // Auto-save
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    if (saveStatus === 'unsaved') {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setSaveStatus('saving');
+        
+        const toSave = {
+          nodes: nodes.map(n => ({...n, data: {...n.data, onEdit: undefined, onDelete: undefined}})),
+          edges,
+          isPublished
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        
+        setTimeout(() => setSaveStatus('saved'), 500);
+      }, 1000);
+    }
+  }, [nodes, edges, isPublished, saveStatus, isLoaded]);
+
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    onNodesChangeCore(changes);
+    setSaveStatus('unsaved');
+  }, [onNodesChangeCore]);
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    onEdgesChangeCore(changes);
+    setSaveStatus('unsaved');
+  }, [onEdgesChangeCore]);
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#9CA3AF', strokeWidth: 2 } }, eds));
+      setSaveStatus('unsaved');
+    },
+    [setEdges]
+  );
+
+  const handleSaveNode = (id: string, newData: any) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === id) {
+          return { ...node, data: newData };
+        }
+        return node;
+      })
+    );
+    setEditingNode(null);
+    setSaveStatus('unsaved');
+  };
+
+  const handlePublish = () => {
+    setIsPublished(true);
+    setSaveStatus('unsaved');
+  };
+
+  const handleUnpublish = () => {
+    setIsPublished(false);
+    setSaveStatus('unsaved');
+  };
+
+  if (!isLoaded) return <div className="h-screen w-full bg-white flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col h-screen w-screen bg-white overflow-hidden">
+      <Header 
+        saveStatus={saveStatus} 
+        onPreview={() => setIsPreviewOpen(true)}
+        isPublished={isPublished}
+        onPublish={handlePublish}
+        onUnpublish={handleUnpublish}
+        onClearAll={() => { if(window.confirm("Are you sure you want to clear the canvas?")) { setNodes([]); setEdges([]); setSaveStatus("unsaved"); } }}
+      />
+      
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar />
+        
+        <div className="flex-1 h-full w-full">
+          <Canvas 
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            setNodes={setNodes}
+            setEdges={setEdges}
+            onEditNode={setEditingNode}
+            setSaveStatus={setSaveStatus}
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        <AnalyticsPanel nodes={nodes} />
+      </div>
+
+      <SettingsDrawer 
+        isOpen={!!editingNode}
+        node={editingNode}
+        onClose={() => setEditingNode(null)}
+        onSave={handleSaveNode}
+      />
+
+      <PreviewModal 
+        isOpen={isPreviewOpen}
+        nodes={nodes}
+        edges={edges}
+        onClose={() => setIsPreviewOpen(false)}
+      />
     </div>
+  );
+}
+
+export default function FunnelMapApp() {
+  return (
+    <ReactFlowProvider>
+      <FunnelMapInner />
+    </ReactFlowProvider>
   );
 }

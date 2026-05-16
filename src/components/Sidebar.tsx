@@ -7,18 +7,30 @@ import {
   Heart, 
   Mail, 
   Layout, 
-  FileText 
+  FileText,
+  Package,
+  Send,
+  Video,
+  ClipboardList,
+  FileSignature,
+  Calendar
 } from 'lucide-react';
 
 export const STEP_TYPES = [
-  { type: 'Sales Page', icon: ShoppingCart, color: '#3B82F6' }, // blue
-  { type: 'Checkout', icon: CreditCard, color: '#10B981' }, // green
-  { type: 'Upsell', icon: ArrowUpCircle, color: '#8B5CF6' }, // purple
-  { type: 'Downsell', icon: ArrowDownCircle, color: '#F59E0B' }, // orange
-  { type: 'Thank You Page', icon: Heart, color: '#14B8A6' }, // teal
-  { type: 'Opt-in Page', icon: Mail, color: '#EC4899' }, // pink
-  { type: 'Landing Page', icon: Layout, color: '#6366F1' }, // indigo
-  { type: 'Custom Page', icon: FileText, color: '#6B7280' }, // gray
+  { type: 'Sales Page', icon: ShoppingCart, color: '#3B82F6' },
+  { type: 'Checkout', icon: CreditCard, color: '#10B981' },
+  { type: 'Upsell', icon: ArrowUpCircle, color: '#8B5CF6' },
+  { type: 'Downsell', icon: ArrowDownCircle, color: '#F59E0B' },
+  { type: 'Thank You Page', icon: Heart, color: '#14B8A6' },
+  { type: 'Opt-in Page', icon: Mail, color: '#EC4899' },
+  { type: 'Landing Page', icon: Layout, color: '#6366F1' },
+  { type: 'Order Bump', icon: Package, color: '#EF4444' },
+  { type: 'Email Follow-up', icon: Send, color: '#8B5CF6' },
+  { type: 'Webinar', icon: Video, color: '#06B6D4' },
+  { type: 'Survey', icon: ClipboardList, color: '#84CC16' },
+  { type: 'Application Page', icon: FileSignature, color: '#F97316' },
+  { type: 'Booking Page', icon: Calendar, color: '#0EA5E9' },
+  { type: 'Custom Page', icon: FileText, color: '#6B7280' },
 ];
 
 export default function Sidebar() {

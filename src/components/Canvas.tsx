@@ -84,6 +84,34 @@ export default function Canvas({
     [screenToFlowPosition, setNodes, setSaveStatus]
   );
 
+  const handleAddNext = useCallback((sourceNode: Node, type: string) => {
+    const newNodeId = uuidv4();
+    const newNode: Node = {
+      id: newNodeId,
+      type: 'funnelNode',
+      position: { x: sourceNode.position.x + 320, y: sourceNode.position.y },
+      data: {
+        title: `New ${type}`,
+        type: type,
+        url: type.toLowerCase().replace(/\s+/g, '-'),
+        description: '',
+        visitors: Math.floor(Math.random() * 500 + 100).toString(),
+        conversion: `${(Math.random() * 30 + 5).toFixed(1)}%`,
+        revenue: `$${Math.floor(Math.random() * 2000 + 100)}`
+      }
+    };
+
+    const newEdge: Edge = {
+      id: `e-${sourceNode.id}-${newNodeId}`,
+      source: sourceNode.id,
+      target: newNodeId,
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+    setEdges((eds) => eds.concat(newEdge));
+    setSaveStatus('unsaved');
+  }, [setNodes, setEdges, setSaveStatus]);
+
   // Inject callbacks into nodes for edit/delete
   const nodesWithCallbacks = nodes.map(node => ({
     ...node,
@@ -94,7 +122,8 @@ export default function Canvas({
         setNodes((nds) => nds.filter((n) => n.id !== node.id));
         setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
         setSaveStatus('unsaved');
-      }
+      },
+      onAddNext: (type: string) => handleAddNext(node, type)
     }
   }));
 

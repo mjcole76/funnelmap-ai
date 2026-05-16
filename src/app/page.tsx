@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ReactFlowProvider, useNodesState, useEdgesState, addEdge, Connection, Edge, Node, NodeChange, EdgeChange } from '@xyflow/react';
+import { v4 as uuidv4 } from 'uuid';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Canvas from '../components/Canvas';
@@ -49,7 +50,7 @@ function FunnelMapInner() {
         setSaveStatus('saving');
         
         const toSave = {
-          nodes: nodes.map(n => ({...n, data: {...n.data, onEdit: undefined, onDelete: undefined}})),
+          nodes: nodes.map(n => ({...n, data: {...n.data, onEdit: undefined, onDelete: undefined, onAddNext: undefined}})),
           edges,
           isPublished
         };
@@ -101,6 +102,73 @@ function FunnelMapInner() {
     setSaveStatus('unsaved');
   };
 
+  const handleGenerate = (formData: any) => {
+    if (nodes.length > 0) {
+      if (!window.confirm("This will clear your current canvas. Proceed?")) {
+        return;
+      }
+    }
+
+    let steps: string[] = [];
+    if (formData.goal === 'Sell product') {
+      if (formData.offerType.includes('Low')) {
+        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Order Bump', 'Upsell', 'Thank You Page'];
+      } else if (formData.offerType.includes('Mid')) {
+        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Upsell', 'Downsell', 'Thank You Page'];
+      } else {
+        steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page'];
+      }
+    } else if (formData.goal === 'Collect leads') {
+      steps = ['Landing Page', 'Opt-in Page', 'Thank You Page', 'Email Follow-up'];
+    } else if (formData.goal === 'Book calls') {
+      steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page'];
+    } else if (formData.goal === 'Webinar registration') {
+      steps = ['Landing Page', 'Opt-in Page', 'Webinar', 'Sales Page', 'Checkout', 'Thank You Page'];
+    } else {
+      steps = ['Landing Page', 'Sales Page', 'Checkout', 'Thank You Page'];
+    }
+
+    const newNodes: Node[] = [];
+    const newEdges: Edge[] = [];
+    
+    let prevId = '';
+    steps.forEach((step, index) => {
+      const id = uuidv4();
+      newNodes.push({
+        id,
+        type: 'funnelNode',
+        position: { x: index * 320, y: 150 },
+        data: {
+          title: `${formData.productName} - ${step}`,
+          type: step,
+          url: step.toLowerCase().replace(/\s+/g, '-'),
+          headline: `Discover ${formData.productName}`,
+          buttonText: 'Next Step',
+          price: formData.price,
+          visitors: Math.floor(Math.random() * 500 + 100).toString(),
+          conversion: `${(Math.random() * 30 + 5).toFixed(1)}%`,
+          revenue: `$${Math.floor(Math.random() * 2000 + 100)}`
+        }
+      });
+      
+      if (prevId) {
+        newEdges.push({
+          id: `e-${prevId}-${id}`,
+          source: prevId,
+          target: id,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#9CA3AF', strokeWidth: 2 }
+        });
+      }
+      prevId = id;
+    });
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setSaveStatus('unsaved');
+  };
+
   if (!isLoaded) return <div className="h-screen w-full bg-white flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>;
 
   return (
@@ -112,6 +180,7 @@ function FunnelMapInner() {
         onPublish={handlePublish}
         onUnpublish={handleUnpublish}
         onClearAll={() => { if(window.confirm("Are you sure you want to clear the canvas?")) { setNodes([]); setEdges([]); setSaveStatus("unsaved"); } }}
+        onGenerate={handleGenerate}
       />
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -135,7 +204,6 @@ function FunnelMapInner() {
       </div>
 
       <SettingsDrawer 
-        isOpen={!!editingNode}
         node={editingNode}
         onClose={() => setEditingNode(null)}
         onSave={handleSaveNode}

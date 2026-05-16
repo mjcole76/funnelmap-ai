@@ -27,6 +27,7 @@ interface CanvasProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onEditNode: (node: Node) => void;
+  onGenerateCopy: (node: Node) => void;
   setSaveStatus: (status: 'saved' | 'saving' | 'unsaved') => void;
 }
 
@@ -39,6 +40,7 @@ export default function Canvas({
   setNodes,
   setEdges,
   onEditNode,
+  onGenerateCopy,
   setSaveStatus
 }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -123,7 +125,8 @@ export default function Canvas({
         setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id));
         setSaveStatus('unsaved');
       },
-      onAddNext: (type: string) => handleAddNext(node, type)
+      onAddNext: (type: string) => handleAddNext(node, type),
+      onGenerateCopy: () => onGenerateCopy(node)
     }
   }));
 

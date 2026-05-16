@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Edit2, Eye, Trash2, Plus } from 'lucide-react';
+import { Edit2, Eye, Trash2, Plus, Wand2, FileText } from 'lucide-react';
 import { STEP_TYPES } from './Sidebar';
 
 interface FunnelNodeData {
@@ -9,14 +9,18 @@ interface FunnelNodeData {
   visitors?: string;
   conversion?: string;
   revenue?: string;
+  copy?: any;
   onEdit?: () => void;
   onDelete?: () => void;
   onAddNext?: (type: string) => void;
+  onGenerateCopy?: () => void;
 }
 
 export default function FunnelNode({ data }: { data: FunnelNodeData }) {
   const stepInfo = STEP_TYPES.find(s => s.type === data.type) || STEP_TYPES[7];
   const [showAddMenu, setShowAddMenu] = useState(false);
+  
+  const hasCopy = !!data.copy;
   
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-[240px] h-[160px] relative group overflow-visible node-pop-in hover:shadow-md transition-all flex flex-col">
@@ -26,6 +30,13 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
         style={{ backgroundColor: stepInfo.color }} 
       />
       
+      {/* Copy Indicator */}
+      {hasCopy && (
+        <div className="absolute top-2 right-2 text-blue-500" title="Has Generated Copy">
+          <FileText className="w-4 h-4" />
+        </div>
+      )}
+
       <div className="p-3 flex-1 flex flex-col justify-between">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -68,10 +79,11 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
               <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button 
+              onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
               className="p-1 text-gray-400 hover:text-blue-600 rounded"
-              title="Preview"
+              title="Generate Copy"
             >
-              <Eye className="w-3.5 h-3.5" />
+              <Wand2 className="w-3.5 h-3.5" />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}

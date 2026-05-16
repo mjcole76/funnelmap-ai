@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X } from 'lucide-react';
+import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings } from 'lucide-react';
+import { FunnelContext } from '../lib/copyTemplates';
 
 interface HeaderProps {
   saveStatus: 'saved' | 'saving' | 'unsaved';
@@ -9,22 +10,42 @@ interface HeaderProps {
   onUnpublish: () => void;
   onClearAll: () => void;
   onGenerate: (data: any) => void;
+  funnelContext: FunnelContext | null;
+  setFunnelContext: (context: FunnelContext) => void;
+  onExportFunnel: () => void;
 }
 
-export default function Header({ saveStatus, onPreview, isPublished, onPublish, onUnpublish, onClearAll, onGenerate }: HeaderProps) {
+export default function Header({ saveStatus, onPreview, isPublished, onPublish, onUnpublish, onClearAll, onGenerate, funnelContext, setFunnelContext, onExportFunnel }: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [formData, setFormData] = useState({
+    funnelName: 'My Funnel',
     productName: '',
-    targetAudience: '',
+    audience: '',
     price: '',
+    problem: 'low conversions',
     goal: 'Sell product',
     offerType: 'Low-ticket ($7-$47)'
   });
 
   const handleGenerate = (e: React.FormEvent) => {
     e.preventDefault();
+    setFunnelContext(formData);
     onGenerate(formData);
     setShowGenerateModal(false);
+  };
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFunnelContext(formData);
+    setShowSettingsModal(false);
+  };
+
+  const openSettings = () => {
+    if (funnelContext) {
+      setFormData(funnelContext as any);
+    }
+    setShowSettingsModal(true);
   };
 
   return (
@@ -69,22 +90,29 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
             </button>
 
             <button 
+              onClick={onExportFunnel}
+              className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <Download className="w-4 h-4 mr-1.5" />
+              Export Funnel
+            </button>
+            
+            <button 
+              onClick={openSettings}
+              className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <Settings className="w-4 h-4 mr-1.5" />
+              Settings
+            </button>
+
+            <button 
               onClick={onClearAll}
               className="flex items-center px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors"
               title="Clear Canvas"
             >
               <Trash className="w-4 h-4 mr-1.5" />
-              Reset
             </button>
 
-            <button 
-              onClick={onPreview}
-              className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              <Play className="w-4 h-4 mr-1.5" />
-              Preview
-            </button>
-            
             <div className="flex rounded-md shadow-sm">
               {!isPublished ? (
                 <button 
@@ -107,23 +135,35 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
         </div>
       </header>
 
-      {showGenerateModal && (
+      {/* Generate & Settings Modals */}
+      {(showGenerateModal || showSettingsModal) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div className="flex items-center space-x-2">
-                <Wand2 className="w-5 h-5 text-purple-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Generate Funnel</h2>
+                {showGenerateModal ? <Wand2 className="w-5 h-5 text-purple-600" /> : <Settings className="w-5 h-5 text-gray-600" />}
+                <h2 className="text-lg font-semibold text-gray-900">{showGenerateModal ? 'Generate Funnel' : 'Funnel Settings'}</h2>
               </div>
               <button 
-                onClick={() => setShowGenerateModal(false)}
+                onClick={() => { setShowGenerateModal(false); setShowSettingsModal(false); }}
                 className="text-gray-400 hover:text-gray-600 rounded-md p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleGenerate} className="p-6 space-y-4">
+            <form onSubmit={showGenerateModal ? handleGenerate : handleSaveSettings} className="p-6 space-y-4 h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Funnel Name</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                  value={formData.funnelName}
+                  onChange={(e) => setFormData({...formData, funnelName: e.target.value})}
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                 <input 
@@ -142,8 +182,8 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
                   type="text" 
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.targetAudience}
-                  onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                  value={formData.audience}
+                  onChange={(e) => setFormData({...formData, audience: e.target.value})}
                   placeholder="e.g. Digital Marketers"
                 />
               </div>
@@ -157,6 +197,18 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
                   value={formData.price}
                   onChange={(e) => setFormData({...formData, price: e.target.value})}
                   placeholder="e.g. $47"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Main Problem</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={formData.problem}
+                  onChange={(e) => setFormData({...formData, problem: e.target.value})}
+                  placeholder="e.g. low conversions"
                 />
               </div>
 
@@ -188,10 +240,10 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
                 </select>
               </div>
 
-              <div className="pt-4 flex justify-end space-x-3">
+              <div className="pt-4 flex justify-end space-x-3 pb-2">
                 <button 
                   type="button"
-                  onClick={() => setShowGenerateModal(false)}
+                  onClick={() => { setShowGenerateModal(false); setShowSettingsModal(false); }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   Cancel
@@ -200,7 +252,7 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                 >
-                  Generate
+                  {showGenerateModal ? 'Generate' : 'Save'}
                 </button>
               </div>
             </form>

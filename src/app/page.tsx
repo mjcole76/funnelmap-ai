@@ -11,6 +11,9 @@ import SettingsDrawer from '../components/SettingsDrawer';
 import PreviewModal from '../components/PreviewModal';
 import PagePreview from '../components/PagePreview';
 import CopyPanel from '../components/CopyPanel';
+import CopyQualityReport from '../components/CopyQualityReport';
+import ExportModal from '../components/ExportModal';
+import TemplateLibrary, { FunnelTemplate } from '../components/TemplateLibrary';
 import { FunnelContext, generateCopy } from '../lib/copyTemplates';
 
 const STORAGE_KEY = 'funnelmap-ai-state';
@@ -72,6 +75,9 @@ function FunnelMapInner() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [isGeneratingFullCopy, setIsGeneratingFullCopy] = useState(false);
+  const [showQualityReport, setShowQualityReport] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
 
   const [funnelContext, setFunnelContext] = useState<FunnelContext>({
     funnelName: 'My Funnel',
@@ -163,6 +169,7 @@ const handleWriteFullFunnel = () => {
       setNodes(updatedNodes);
       setSaveStatus('unsaved');
       setIsGeneratingFullCopy(false);
+      setTimeout(() => setShowQualityReport(true), 300);
     }, 500);
   };
 
@@ -193,6 +200,7 @@ const handleWriteFullFunnel = () => {
       setNodes(updatedNodes);
       setSaveStatus('unsaved');
       setIsGeneratingFullCopy(false);
+      setTimeout(() => setShowQualityReport(true), 300);
     }, 500);
   };
 
@@ -461,65 +469,68 @@ const newNodes: Node[] = [];
   };
 
   const handleExportFunnel = () => {
-    let sumVisitors = 0;
-    let sumRevenue = 0;
-    let sumConversion = 0;
-    let numWithConv = 0;
+    setShowExportModal(true);
+  };
 
-    nodes.forEach(n => {
-      if (n.data.visitors) sumVisitors += parseInt((n.data.visitors as string).replace(/,/g, ''), 10) || 0;
-      if (n.data.revenue) sumRevenue += parseInt((n.data.revenue as string).replace(/[^0-9.-]+/g, ''), 10) || 0;
-      if (n.data.conversion) {
-        sumConversion += parseFloat((n.data.conversion as string).replace(/%/g, '')) || 0;
-        numWithConv++;
-      }
-    });
+  const handleLoadTemplate = (template: FunnelTemplate) => {
+    if (nodes.length > 0) {
+      if (!window.confirm('This will replace your current canvas. Continue?')) return;
+    }
+    const newNodes: any[] = template.steps.map((step, i) => ({
+      id: uuidv4(),
+      type: 'funnelNode',
+      position: step.relativePosition,
+      data: {
+        title: step.title,
+        type: step.type,
+        url: step.title.toLowerCase().replace(/\s+/g, '-'),
+        headline: '',
+        buttonText: step.buttonText || 'Next Step',
+        price: funnelContext.price || '',
+        visitors: '0',
+        conversion: '0%',
+        revenue: '0',
+        previewTemplate: step.template,
+      },
+    }));
+    const newEdges: any[] = template.edges.map(e => ({
+      id: `e-${newNodes[e.sourceIdx]?.id}-${newNodes[e.targetIdx]?.id}`,
+      source: newNodes[e.sourceIdx]?.id,
+      target: newNodes[e.targetIdx]?.id,
+      type: 'smoothstep',
+      animated: true,
+      label: e.label,
+      labelStyle: { fontSize: '10px', color: '#9ca3af', fontWeight: 400, background: 'rgba(255,255,255,0.8)', padding: '1px 6px', borderRadius: '4px' },
+      style: { stroke: '#9CA3AF', strokeWidth: 2 },
+    })).filter(e => e.source && e.target);
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setSaveStatus('unsaved');
+  };
 
-    const avgConversion = numWithConv > 0 ? (sumConversion / numWithConv).toFixed(1) + '%' : '0%';
-
-    let text = `# ${funnelContext?.funnelName || 'Funnel'}\n\n`;
-    text += `## Offer Summary\n`;
-    text += `- **Product:** ${funnelContext?.productName || ''}\n`;
-    text += `- **Audience:** ${funnelContext?.audience || ''}\n`;
-    text += `- **Price:** ${funnelContext?.price || ''}\n`;
-    text += `- **Goal:** ${funnelContext?.goal || ''}\n\n`;
-
-    text += `## Funnel Map\n`;
-    nodes.forEach((n, idx) => {
-      text += `${idx + 1}. ${n.data.title} (${n.data.type})\n`;
-    });
-    text += `\n`;
-
-    text += `## Analytics Summary\n`;
-    text += `- Total Visitors: ${sumVisitors}\n`;
-    text += `- Average Conversion: ${avgConversion}\n`;
-    text += `- Total Revenue: $${sumRevenue}\n\n`;
-
-    text += `## Page Copy\n\n`;
-    nodes.forEach((n, idx) => {
-      text += `### ${idx + 1}. ${n.data.title} — ${n.data.type}\n`;
-      const tplName = (n.data.previewTemplate) ? (n.data.previewTemplate as string).split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Default';
-      text += `**Template:** ${tplName}\n\n`;
-      if (n.data.copy) {
-        const copy: any = n.data.copy;
-        text += `**Headline:** ${copy.headline}\n\n`;
-        copy.sections.forEach((s: any) => {
-          text += `**${s.title}**\n${s.content}\n\n`;
-        });
-      } else {
-        text += `*No copy generated yet*\n\n`;
-      }
-    });
-
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(funnelContext?.funnelName || 'funnel').toLowerCase().replace(/\s+/g, '-')}-plan.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleFixNode = (nodeId: string) => {
+    setShowQualityReport(false);
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      // Regenerate copy for this single node
+      const context = {
+        productName: funnelContext.productName || 'Your Product',
+        audience: funnelContext.audience || 'your audience',
+        price: funnelContext.price || '$29',
+        problem: funnelContext.problem || 'their main challenge',
+        goal: funnelContext.goal || 'achieve their desired outcome',
+        funnelName: funnelContext.funnelName || 'My Funnel',
+        offerType: funnelContext.offerType || 'low_ticket',
+        previewTemplate: (node.data.previewTemplate as string) || '',
+        stepTitle: (node.data.title as string) || '',
+        headline: (node.data.headline as string) || '',
+        buttonText: (node.data.buttonText as string) || '',
+      };
+      const generated = generateCopy(node.data.type as string, context);
+      localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(generated));
+      setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: generated, _copyUpdated: Date.now() } } : n));
+      setSaveStatus('unsaved');
+    }
   };
 
   if (!isLoaded) return <div className="h-screen w-full bg-white flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>;
@@ -543,6 +554,8 @@ const newNodes: Node[] = [];
         setIsSettingsOpen={setIsSettingsOpen}
         onWriteFullFunnel={handleWriteFullFunnel}
         isGeneratingFullCopy={isGeneratingFullCopy}
+        onOpenQualityReport={() => setShowQualityReport(true)}
+        onOpenTemplateLibrary={() => setShowTemplateLibrary(true)}
       />
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -633,6 +646,30 @@ const newNodes: Node[] = [];
           </div>
         </div>
       )}
+
+      <CopyQualityReport
+        isOpen={showQualityReport}
+        onClose={() => setShowQualityReport(false)}
+        nodes={nodes}
+        funnelContext={funnelContext}
+        onFixNode={handleFixNode}
+      />
+
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        nodes={nodes}
+        edges={edges}
+        funnelContext={funnelContext}
+      />
+
+      <TemplateLibrary
+        isOpen={showTemplateLibrary}
+        onClose={() => setShowTemplateLibrary(false)}
+        onLoadTemplate={handleLoadTemplate}
+        currentNodes={nodes}
+        currentEdges={edges}
+      />
     </div>
   );
 }

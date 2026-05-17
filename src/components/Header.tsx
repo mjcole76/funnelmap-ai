@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings, LayoutGrid, RefreshCcw } from 'lucide-react';
+import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings, LayoutGrid, RefreshCcw, ClipboardCheck, Library } from 'lucide-react';
 import { FunnelContext } from '../lib/copyTemplates';
 
 interface HeaderProps {
@@ -19,6 +19,8 @@ interface HeaderProps {
   setIsSettingsOpen?: (isOpen: boolean) => void;
   onWriteFullFunnel?: () => void;
   isGeneratingFullCopy?: boolean;
+  onOpenQualityReport?: () => void;
+  onOpenTemplateLibrary?: () => void;
 }
 
 export default function Header({ 
@@ -37,7 +39,9 @@ export default function Header({
   isSettingsOpen = false,
   setIsSettingsOpen,
   onWriteFullFunnel,
-  isGeneratingFullCopy
+  isGeneratingFullCopy,
+  onOpenQualityReport,
+  onOpenTemplateLibrary
 }: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showSettingsModalLocal, setShowSettingsModalLocal] = useState(false);
@@ -137,6 +141,28 @@ export default function Header({
               >
                 <Wand2 className="w-4 h-4 mr-1.5" />
                 {isGeneratingFullCopy ? 'Generating...' : 'Write Full Funnel'}
+              </button>
+            )}
+
+            {onOpenQualityReport && (
+              <button 
+                onClick={onOpenQualityReport}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors"
+                title="Copy Quality Report"
+              >
+                <ClipboardCheck className="w-4 h-4 mr-1.5" />
+                QA
+              </button>
+            )}
+
+            {onOpenTemplateLibrary && (
+              <button 
+                onClick={onOpenTemplateLibrary}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                title="Template Library"
+              >
+                <Library className="w-4 h-4 mr-1.5" />
+                Templates
               </button>
             )}
 

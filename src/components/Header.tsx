@@ -54,9 +54,15 @@ export default function Header({
     productName: '',
     audience: '',
     price: '',
-    problem: 'low conversions',
+    problem: '',
     goal: 'Sell product',
-    offerType: 'Low-ticket ($7-$47)'
+    offerType: 'Low-ticket ($7-$47)',
+    desiredOutcome: '',
+    whatsIncluded: '',
+    whyNow: '',
+    trafficSource: '',
+    buyerObjection: '',
+    tone: 'Practical and direct',
   });
 
   useEffect(() => {
@@ -243,7 +249,7 @@ export default function Header({
       {/* Generate & Settings Modals */}
       {(showGenerateModal || showSettingsModal) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div className="flex items-center space-x-2">
                 {showGenerateModal ? <Wand2 className="w-5 h-5 text-purple-600" /> : <Settings className="w-5 h-5 text-gray-600" />}
@@ -257,106 +263,100 @@ export default function Header({
               </button>
             </div>
             
-            <form onSubmit={showGenerateModal ? handleGenerate : handleSaveSettings} className="p-6 space-y-4 h-[70vh] overflow-y-auto">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Funnel Name</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                  value={formData.funnelName}
-                  onChange={(e) => setFormData({...formData, funnelName: e.target.value})}
-                />
+            <form onSubmit={showGenerateModal ? handleGenerate : handleSaveSettings} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* SECTION 1: Basic Offer */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">Basic Offer</h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Funnel Name</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.funnelName} onChange={(e) => setFormData({...formData, funnelName: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} placeholder="e.g. Weekend Faceless Channel Sprint" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.audience} onChange={(e) => setFormData({...formData, audience: e.target.value})} placeholder="e.g. Beginners who want to start a faceless YouTube channel" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} placeholder="e.g. $27" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Offer Type</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.offerType} onChange={(e) => setFormData({...formData, offerType: e.target.value})}>
+                    <option>Low-ticket ($7-$47)</option>
+                    <option>Mid-ticket ($47-$297)</option>
+                    <option>High-ticket ($297+)</option>
+                    <option>Free lead magnet</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Funnel Goal</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.goal} onChange={(e) => setFormData({...formData, goal: e.target.value})}>
+                    <option>Sell product</option>
+                    <option>Collect leads</option>
+                    <option>Book calls</option>
+                    <option>Webinar registration</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.productName}
-                  onChange={(e) => setFormData({...formData, productName: e.target.value})}
-                  placeholder="e.g. AI Content Creator"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.audience}
-                  onChange={(e) => setFormData({...formData, audience: e.target.value})}
-                  placeholder="e.g. Digital Marketers"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
-                  placeholder="e.g. $47"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Main Problem</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.problem}
-                  onChange={(e) => setFormData({...formData, problem: e.target.value})}
-                  placeholder="e.g. low conversions"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Funnel Goal</label>
-                <select 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.goal}
-                  onChange={(e) => setFormData({...formData, goal: e.target.value})}
-                >
-                  <option>Sell product</option>
-                  <option>Collect leads</option>
-                  <option>Book calls</option>
-                  <option>Webinar registration</option>
-                </select>
+              {/* SECTION 2: Copy Details */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide border-b border-gray-100 pb-2">Copy Details</h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What problem does this solve?</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" rows={2} value={formData.problem} onChange={(e) => setFormData({...formData, problem: e.target.value})} placeholder="Example: Truck drivers waste time guessing what to eat at truck stops and often end up choosing meals that leave them tired." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What result does the buyer want?</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" rows={2} value={formData.desiredOutcome || ''} onChange={(e) => setFormData({...formData, desiredOutcome: e.target.value})} placeholder="Example: Find better food options on the road in less time without following a strict diet." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What does the buyer get?</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" rows={3} value={formData.whatsIncluded || ''} onChange={(e) => setFormData({...formData, whatsIncluded: e.target.value})} placeholder="Example: Meal finder tool, road meal guide, fast-food shortcuts, snack swaps, weekly meal ideas." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Why would someone want this now?</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" rows={2} value={formData.whyNow || ''} onChange={(e) => setFormData({...formData, whyNow: e.target.value})} placeholder="Example: They are tired of wasting time guessing and want something they can use today." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Where will traffic come from?</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.trafficSource || ''} onChange={(e) => setFormData({...formData, trafficSource: e.target.value})}>
+                    <option value="">Select...</option>
+                    <option>TikTok</option>
+                    <option>YouTube</option>
+                    <option>Facebook group</option>
+                    <option>Paid ads</option>
+                    <option>Email list</option>
+                    <option>Organic social</option>
+                    <option>Direct link</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What might stop them from buying?</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none" rows={2} value={formData.buyerObjection || ''} onChange={(e) => setFormData({...formData, buyerObjection: e.target.value})} placeholder="Example: They may think this is too technical, too basic, or not worth paying for." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Writing Tone</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.tone || 'Practical and direct'} onChange={(e) => setFormData({...formData, tone: e.target.value})}>
+                    <option>Practical and direct</option>
+                    <option>Bold direct-response</option>
+                    <option>Friendly and simple</option>
+                    <option>Premium and polished</option>
+                    <option>Urgent and punchy</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Offer Type</label>
-                <select 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.offerType}
-                  onChange={(e) => setFormData({...formData, offerType: e.target.value})}
-                >
-                  <option>Low-ticket ($7-$47)</option>
-                  <option>Mid-ticket ($47-$297)</option>
-                  <option>High-ticket ($297+)</option>
-                  <option>Free lead magnet</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex justify-end space-x-3 pb-2">
-                <button 
-                  type="button"
-                  onClick={() => { setShowGenerateModal(false); setShowSettingsModal(false); }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                >
+              <div className="pt-4 flex justify-end space-x-3 pb-2 sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3">
+                <button type="button" onClick={() => { setShowGenerateModal(false); setShowSettingsModal(false); }} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                   Cancel
                 </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                >
+                <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700">
                   {showGenerateModal ? 'Generate' : 'Save'}
                 </button>
               </div>

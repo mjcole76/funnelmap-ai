@@ -6,6 +6,12 @@ export interface FunnelContext {
   problem: string;
   goal: string;
   offerType: string;
+  desiredOutcome?: string;
+  whatsIncluded?: string;
+  whyNow?: string;
+  trafficSource?: string;
+  buyerObjection?: string;
+  tone?: string;
   stepTitle?: string;
   headline?: string;
   buttonText?: string;
@@ -129,6 +135,12 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
     problem = 'the core challenge',
     goal = 'achieve better results',
     previewTemplate,
+    desiredOutcome = '',
+    whatsIncluded = '',
+    whyNow = '',
+    trafficSource = '',
+    buyerObjection = '',
+    tone = 'Practical and direct',
   } = context;
 
   // If context is still defaults/garbage, produce a clean "fill in your offer" message
@@ -208,20 +220,21 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
         ].join('\n');
       } else {
         // hero_cta (default)
-        headline = `${cap(benefit)} — Without the Guesswork`;
+        const outcomeText = desiredOutcome || `${benefit} without the guesswork`;
+        headline = `${cap(outcomeText.split('.')[0].split(',')[0])}`;
         bodyContent = [
-          `Subheadline: Get a free guide built for ${audience} who need to ${benefit} without wasting time at every step.`,
+          `Subheadline: A free guide for ${audience} who want to ${outcomeText.toLowerCase().split('.')[0]}.`,
           ``,
           `Benefits:`,
           `• Know exactly what to do instead of wasting time guessing`,
           `• Save time with pre-filtered, simple options`,
           `• Works immediately — no learning curve, no setup`,
-          `• Simple enough to use even when you're tired or in a rush`,
-          `• Updated regularly so it stays useful long-term`,
+          `• Simple enough to use even when you are busy or tired`,
+          `• Built specifically for ${audience}`,
           ``,
           `CTA: Get the Free Guide Now`,
           ``,
-          `Trust: Free guide. No spam. Built for ${audience}.`,
+          `Trust: Free. No spam. Built for ${audience}.`,
         ].join('\n');
       }
       break;
@@ -270,78 +283,85 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           `CTA: Join Them — ${price}`,
         ].join('\n');
       } else if (previewTemplate === 'stacked_offer') {
-        headline = `Everything You Need to ${cap(benefit)}`;
+        const outcomeText = desiredOutcome || benefit;
+        const includedItems = whatsIncluded
+          ? whatsIncluded.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 2)
+          : [`${productName} — Core System`, `Quick-Start Guide`, `Bonus Shortcuts`, `Priority Support`, `Lifetime Updates`];
+        const basePrice = parseInt(price.replace(/[^0-9]/g, '')) || 29;
+
+        headline = `Everything You Need to ${cap(outcomeText.split('.')[0].split(',')[0])}`;
         bodyContent = [
           `What's Included:`,
-          `✓ ${productName} — Core System (Value: $49)`,
-          `✓ Quick-Start Guide (Value: $19)`,
-          `✓ Bonus Shortcuts (Value: $29)`,
-          `✓ Priority Support (Value: $19)`,
-          `✓ Lifetime Updates (Value: $49)`,
+          ...includedItems.map((item, i) => `✓ ${item.replace(/^[•\-✓]\s*/, '')} (Value: $${Math.round((basePrice * (2 + i * 0.5)))})`),
           ``,
-          `Total Value: $165`,
+          `Total Value: $${includedItems.length * basePrice * 2}+`,
           `Your Price Today: ${price}`,
           ``,
           `CTA: Get Everything for ${price}`,
         ].join('\n');
       } else {
         // classic_long_form (default)
-        headline = `${cap(benefit)} in Less Time`;
+        const outcomeText = desiredOutcome || `${benefit} faster and easier`;
+        const urgencyText = whyNow || `You are tired of dealing with ${pain} and want a solution that works now.`;
+        const objectionText = buyerObjection || `They think it might not work for their specific situation.`;
+        
+        // Parse what's included into bullet items
+        const includedItems = whatsIncluded
+          ? whatsIncluded.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 2)
+          : [`${productName} — the complete system`, `Decision shortcuts for common situations`, `Simple recommendations`, `Quick-reference guides`, `Lifetime updates`];
+
+        headline = `${cap(outcomeText.split('.')[0].split(',')[0])}`;
         bodyContent = [
           `Opening hook:`,
-          `When you are busy all day, decisions about ${pain} get old fast. You look at your options, pick whatever seems easiest, and move on. Sometimes it works. A lot of times, you wish you had chosen better.`,
+          urgencyText,
           ``,
-          `${productName} is built to make that decision easier.`,
+          `${productName} was built to solve this.`,
           ``,
           `Problem:`,
-          `Most tools are not made for ${audience}. They assume you have a normal schedule, plenty of time, and endless choices. That is not your reality. You need answers that fit real conditions: limited options, tight schedules, and solutions that work while you keep moving.`,
+          `${cap(problem)}. Most solutions are not made for ${audience}. They assume you have unlimited time, perfect conditions, and endless options. That is not your reality.`,
           ``,
           `Promise:`,
-          `${productName} gives you quick guidance for real situations. Instead of guessing, you can check better choices, avoid common bad picks, and build a simple routine that works around your life.`,
+          `${productName} helps you ${outcomeText}. No complexity. No guesswork. Just a clear path from where you are to where you want to be.`,
           ``,
           `What You Get:`,
-          `• ${productName} — the complete system`,
-          `• Decision shortcuts for common situations`,
-          `• Simple "better choice" recommendations`,
-          `• Quick-reference guides`,
-          `• Lifetime early access updates`,
+          ...includedItems.map(item => `• ${item.replace(/^[•\-✓]\s*/, '')}`),
           ``,
           `Benefits:`,
-          `• ${cap(benefit)} faster when you are short on time`,
-          `• Avoid choices that make things harder later`,
-          `• Find better options even with limited choices`,
-          `• Use simple recommendations instead of complicated systems`,
-          `• Make repeatable decisions you can rely on`,
-          `• Get early access for one low lifetime price`,
+          `• ${cap(outcomeText)} without overthinking it`,
+          `• Save time by skipping the guesswork`,
+          `• Works immediately — no learning curve or setup`,
+          `• Built specifically for ${audience}`,
+          `• Simple enough to use even when you are busy or tired`,
+          `• One-time purchase — no subscriptions`,
           ``,
           `Who It's For:`,
-          `• ${cap(audience)} who deal with ${pain} often`,
-          `• Anyone trying to make better decisions without overcomplicating it`,
-          `• Anyone who wants a simple tool, not another complex system`,
-          `• Anyone tired of making the same rushed decision every day`,
+          `• ${cap(audience)} dealing with ${pain}`,
+          `• Anyone who wants a simple, practical solution`,
+          `• Anyone tired of wasting time on the wrong approach`,
+          `• Anyone who wants clear guidance instead of trial and error`,
           ``,
           `Who It's NOT For:`,
-          `• People who need a full professional consultation`,
-          `• People looking for a complex enterprise solution`,
-          `• Anyone expecting a one-size-fits-all miracle`,
+          `• People who need one-on-one professional consulting`,
+          `• People looking for a fully custom enterprise solution`,
+          `• Anyone not willing to try a simpler approach`,
           ``,
           `Guarantee:`,
-          `Try it for 30 days. If it does not help you ${benefit} more easily, ask for a refund.`,
+          `Try it for 30 days. If ${productName} does not help you ${outcomeText.toLowerCase().split('.')[0]}, ask for a full refund. No hassle, no questions.`,
           ``,
-          `CTA: Get Lifetime Early Access for ${price}`,
+          `CTA: Get ${productName} — ${price}`,
           ``,
           `FAQ:`,
-          `Q: Is this only for ${audience}?`,
-          `A: It is built around ${audience}, but anyone with a similar challenge can use it.`,
+          `Q: Who is this for?`,
+          `A: ${cap(audience)} who want to ${outcomeText.toLowerCase().split('.')[0]}.`,
           ``,
-          `Q: Do I need technical skills?`,
-          `A: No. The goal is faster, simpler decisions. Anyone can use it.`,
+          `Q: ${objectionText.replace(/^they /i, 'I ').replace(/\.$/, '?')}`,
+          `A: ${productName} is built for real situations. The 30-day guarantee means you can try it and see if it fits your needs.`,
           ``,
-          `Q: Will it work for my situation?`,
-          `A: It is designed around common situations that ${audience} face regularly.`,
+          `Q: How quickly will I see results?`,
+          `A: Most people get value from ${productName} the first time they use it. Start simple and build from there.`,
           ``,
-          `Q: What does lifetime early access mean?`,
-          `A: You get access now at the early price and keep access as the product improves.`,
+          `Q: Is this a subscription?`,
+          `A: No. One payment of ${price} gets you full access. No recurring charges.`,
         ].join('\n');
       }
       break;
@@ -351,35 +371,34 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
     // CHECKOUT
     // ================================================================
     case 'Checkout': {
+      const outcomeText = desiredOutcome || benefit;
+      const includedItems = whatsIncluded
+        ? whatsIncluded.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 2).slice(0, 5)
+        : [`Full access to ${productName}`, `All guides and shortcuts`, `Future updates included`, `No monthly subscription`];
+
       headline = `Get ${productName} Today`;
       if (previewTemplate === 'trust_checkout') {
         bodyContent = [
           `Order Summary:`,
           `${productName}`,
-          `Lifetime Early Access`,
           `${price} one-time payment`,
           ``,
           `What's Included:`,
-          `• Full access to ${productName}`,
-          `• All current features and guides`,
-          `• Early access to future updates`,
-          `• No monthly subscription`,
+          ...includedItems.map(item => `• ${item.replace(/^[•\-✓]\s*/, '')}`),
           ``,
           `Trust: 🔒 Secure checkout. One-time payment. No subscription.`,
           ``,
-          `Guarantee: Try ${productName} for 30 days. If it does not help you ${benefit}, request a refund.`,
+          `Guarantee: Try ${productName} for 30 days. If it does not help you ${outcomeText.toLowerCase().split('.')[0]}, request a full refund.`,
           ``,
           `CTA: Complete My Purchase for ${price}`,
         ].join('\n');
       } else if (previewTemplate === 'two_column') {
         bodyContent = [
           `Product Summary:`,
-          `${productName} helps ${audience} ${benefit} — instantly after purchase.`,
+          `${productName} helps ${audience} ${outcomeText.toLowerCase().split('.')[0]} — instantly after purchase.`,
           ``,
           `What's Included:`,
-          `• Complete ${productName} system`,
-          `• Instant access`,
-          `• 30-day guarantee`,
+          ...includedItems.map(item => `• ${item.replace(/^[•\-✓]\s*/, '')}`),
           ``,
           `Payment:`,
           `Enter your details below for instant access.`,
@@ -391,19 +410,14 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
         bodyContent = [
           `Order Summary:`,
           `${productName}`,
-          `Lifetime Early Access`,
           `${price} one-time payment`,
           ``,
           `What's Included:`,
-          `• Full access to ${productName}`,
-          `• Decision shortcuts and guides`,
-          `• Simple recommendations`,
-          `• Early access to future updates`,
-          `• No monthly subscription`,
+          ...includedItems.map(item => `• ${item.replace(/^[•\-✓]\s*/, '')}`),
           ``,
           `Trust: Secure checkout. One-time payment. No subscription.`,
           ``,
-          `Guarantee: Try ${productName} for 30 days. If it does not help you ${benefit}, request a refund.`,
+          `Guarantee: Try ${productName} for 30 days. If it does not help you ${outcomeText.toLowerCase().split('.')[0]}, request a full refund.`,
           ``,
           `CTA: Complete My Purchase for ${price}`,
         ].join('\n');
@@ -469,26 +483,27 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
     // ================================================================
     case 'Upsell': {
       const upsellName = context.stepTitle && context.stepTitle !== 'Upsell' ? context.stepTitle : `${short} Pro`;
+      const outcomeText = desiredOutcome || `${benefit} faster and more consistently`;
 
       headline = `Want the Complete System Too?`;
       bodyContent = [
-        `Subheadline: Upgrade to ${upsellName} and get a more complete planning system for ${benefit} all week.`,
+        `Subheadline: Upgrade to ${upsellName} and get the full system for ${audience} who want to ${outcomeText.toLowerCase().split('.')[0]}.`,
         ``,
         `Why Now:`,
-        `You already have ${productName}. The Pro upgrade gives you a stronger plan so you are not starting from zero every day.`,
+        `You already have ${productName}. The upgrade gives you a more complete system so you can ${outcomeText.toLowerCase().split('.')[0]} — consistently, not just once.`,
         ``,
         `What's Included:`,
-        `• Weekly planning templates`,
-        `• Advanced frameworks and guides`,
-        `• Better-choice lists for common situations`,
-        `• Quick-reference printable guide`,
+        `• Advanced templates and frameworks`,
+        `• Complete planning system`,
+        `• Quick-reference printable guides`,
         `• Priority support`,
+        `• All future updates included`,
         ``,
         `Benefits:`,
-        `• Plan ahead before the week gets away from you`,
-        `• Know what to do when your options are limited`,
-        `• Build a repeatable routine that works`,
-        `• Make fewer rushed decisions during busy days`,
+        `• Go from one-time use to a repeatable system`,
+        `• Save more time with advanced shortcuts`,
+        `• Get better results, more consistently`,
+        `• Built to grow with you as your needs change`,
         ``,
         `CTA: Yes, Add ${upsellName}`,
         ``,
@@ -533,21 +548,22 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
     // THANK YOU PAGE
     // ================================================================
     case 'Thank You Page': {
+      const outcomeText = desiredOutcome || `${benefit} more easily`;
       headline = `You're In. Here's How to Get Started`;
       bodyContent = [
         `Subheadline: Your ${productName} access is ready.`,
         ``,
         `Confirmation:`,
-        `Thanks for grabbing ${productName}. You now have access to the system built to help you ${benefit} more easily.`,
+        `Thanks for grabbing ${productName}. You now have access to everything you need to ${outcomeText.toLowerCase().split('.')[0]}.`,
         ``,
         `Next Steps:`,
         `1. Check your inbox for your access email.`,
         `2. Open ${productName} and save the link somewhere easy to find.`,
-        `3. Use it the next time you need to make a decision.`,
-        `4. Start with one better choice. You do not need to overhaul everything at once.`,
+        `3. Start with the first thing that applies to your situation.`,
+        `4. Keep it simple — you do not need to use everything at once.`,
         ``,
         `Support:`,
-        `If you do not see your access email within a few minutes, check your spam folder or contact support.`,
+        `If you do not see your access email within a few minutes, check your spam folder or reply to this email for help.`,
         ``,
         `CTA: Open ${productName}`,
       ].join('\n');
@@ -558,30 +574,32 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
     // EMAIL FOLLOW-UP
     // ================================================================
     case 'Email Follow-up': {
+      const outcomeText = desiredOutcome || `${benefit} more easily`;
+      const urgencyText = whyNow || `You wanted to stop wasting time on ${pain}.`;
       headline = `${productName} — Follow-Up Sequence`;
       bodyContent = [
         `Email 1 — Welcome (Day 0)`,
         `Subject: You're in — here's your ${productName} access`,
-        `Body: Thanks for grabbing ${productName}. Your access is ready. Start simple — the next time you need to ${benefit}, use it to compare your options and choose one better option than you normally would. You do not need to be perfect. The goal is to make the next decision easier.`,
+        `Body: Thanks for grabbing ${productName}. Your access is ready. Start simple: pick one thing from ${productName} and apply it the next time you need to ${outcomeText.toLowerCase().split('.')[0]}. You do not need to use everything at once.`,
         `CTA: Open ${productName}`,
         ``,
         `Email 2 — Quick Win (Day 2)`,
-        `Subject: Try this next time`,
-        `Body: Here is the easiest way to use ${productName} today. Before you make your next decision, ask yourself: "What option will work best for the next few hours?" That one question changes the decision. Instead of choosing whatever is fastest, use ${productName} to look for a better option.`,
+        `Subject: Try this first`,
+        `Body: Here is the fastest way to get value from ${productName}: instead of starting from scratch, open the first section and follow the simple steps. Most ${audience} see results within the first use. No complicated setup, no learning curve.`,
         `CTA: Use ${productName} Now`,
         ``,
         `Email 3 — Common Mistake (Day 4)`,
-        `Subject: The mistake that makes ${pain} harder`,
-        `Body: One of the easiest mistakes is choosing only because it is fast. Fast matters — but if the choice makes things harder later, it costs you more than a few minutes. ${productName} helps you find the better option inside the choices you already have.`,
-        `CTA: Find a Better Option`,
+        `Subject: The mistake most ${audience} make`,
+        `Body: The biggest mistake? Overthinking it. ${urgencyText} ${productName} is built to give you a clear answer quickly — not to add more decisions to your day. Open it, follow the guidance, move on.`,
+        `CTA: Keep It Simple`,
         ``,
-        `Email 4 — Simple Routine (Day 6)`,
-        `Subject: A simple routine you can repeat`,
-        `Body: The easiest way to make better decisions is to stop treating every situation like a brand-new problem. Use a simple repeatable routine: identify your best option, avoid the choice that always backfires, and keep a backup ready. ${productName} helps you build that routine without overcomplicating things.`,
+        `Email 4 — Make It a Habit (Day 6)`,
+        `Subject: How to make this stick`,
+        `Body: The difference between people who ${outcomeText.toLowerCase().split('.')[0]} and those who don't? A simple repeatable system. ${productName} gives you that system. Use it once, then use it again. That is how you build momentum without adding complexity.`,
         `CTA: Build Your Routine`,
         ``,
         `Email 5 — Upgrade Reminder (Day 8)`,
-        `Subject: Want the weekly planning system too?`,
+        `Subject: Want the complete system too?`,
         `Body: If ${productName} is helping, the next step is to plan ahead a little. The Pro version gives you a weekly system, quick-reference guides, and planning templates so you are not making every decision from scratch.`,
         `CTA: See ${short} Pro`,
       ].join('\n');

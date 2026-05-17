@@ -254,7 +254,7 @@ export default function PagePreview({
             <p className="text-2xl text-gray-600 font-light">{parsedSubheadline}</p>
           </div>
 
-          <div className="bg-red-50 p-8 rounded-2xl border border-red-100 space-y-4">
+          <div className="bg-gray-50 p-8 rounded-2xl border border-gray-200 space-y-4">
             <h2 className="text-2xl font-bold text-red-900">The Problem</h2>
             <p className="text-red-800 text-lg leading-relaxed">{funnelSettings.problem}</p>
             {parsedParagraphs.slice(0, 2).map((p, i) => (
@@ -421,7 +421,7 @@ export default function PagePreview({
     if (previewTemplate === 'checkbox_bump' || previewTemplate === 'bonus_box') {
       return (
         <div className="max-w-2xl mx-auto">
-          <div className="border-2 border-dashed border-red-400 bg-red-50 p-6 rounded-xl space-y-4">
+          <div className="border border-gray-200 bg-white shadow-sm p-6 rounded-xl space-y-4">
             <div className="flex items-start">
               <input type="checkbox" checked readOnly className="mt-1 w-5 h-5 text-red-600 rounded" />
               <div className="ml-3">

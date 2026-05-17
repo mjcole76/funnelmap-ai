@@ -129,6 +129,27 @@ function FunnelMapInner() {
     }
   }, [nodes, edges, isPublished, funnelContext, saveStatus, isLoaded]);
 
+  // Helper: build full copy context from funnelContext + node data
+  const buildCopyContext = (node: Node): FunnelContext => ({
+    productName: funnelContext.productName || 'Your Product',
+    audience: funnelContext.audience || 'your audience',
+    price: funnelContext.price || '$29',
+    problem: funnelContext.problem || 'their main challenge',
+    goal: funnelContext.goal || 'achieve their desired outcome',
+    funnelName: funnelContext.funnelName || 'My Funnel',
+    offerType: funnelContext.offerType || 'low_ticket',
+    desiredOutcome: funnelContext.desiredOutcome || '',
+    whatsIncluded: funnelContext.whatsIncluded || '',
+    whyNow: funnelContext.whyNow || '',
+    trafficSource: funnelContext.trafficSource || '',
+    buyerObjection: funnelContext.buyerObjection || '',
+    tone: funnelContext.tone || 'Practical and direct',
+    previewTemplate: (node.data.previewTemplate as string) || '',
+    stepTitle: (node.data.title as string) || '',
+    headline: (node.data.headline as string) || '',
+    buttonText: (node.data.buttonText as string) || '',
+  });
+
 const handleWriteFullFunnel = () => {
     const nodesWithoutCopy = nodes.filter(n => {
       const savedCopy = localStorage.getItem(`funnel-copy-${n.id}`) || n.data.copy;
@@ -145,20 +166,7 @@ const handleWriteFullFunnel = () => {
       const updatedNodes = nodes.map(node => {
         const savedCopy = localStorage.getItem(`funnel-copy-${node.id}`) || node.data.copy;
         if (!savedCopy) {
-          const context = {
-            productName: funnelContext.productName || 'Your Product',
-            audience: funnelContext.audience || 'your audience',
-            price: funnelContext.price || '$29',
-            problem: funnelContext.problem || 'their main challenge',
-            goal: funnelContext.goal || 'achieve their desired outcome',
-            funnelName: funnelContext.funnelName || 'My Funnel',
-            offerType: funnelContext.offerType || 'low_ticket',
-            previewTemplate: (node.data.previewTemplate as string) || '',
-            stepTitle: (node.data.title as string) || '',
-            headline: (node.data.headline as string) || '',
-            buttonText: (node.data.buttonText as string) || '',
-          };
-          
+          const context = buildCopyContext(node);
           const generated = generateCopy(node.data.type as string, context);
           localStorage.setItem(`funnel-copy-${node.id}`, JSON.stringify(generated));
           return { ...node, data: { ...node.data, copy: generated, _copyUpdated: Date.now() } };
@@ -178,20 +186,7 @@ const handleWriteFullFunnel = () => {
     setIsGeneratingFullCopy(true);
     setTimeout(() => {
       const updatedNodes = nodes.map(node => {
-        const context = {
-          productName: funnelContext.productName || 'Your Product',
-          audience: funnelContext.audience || 'your audience',
-          price: funnelContext.price || '$29',
-          problem: funnelContext.problem || 'their main challenge',
-          goal: funnelContext.goal || 'achieve their desired outcome',
-          funnelName: funnelContext.funnelName || 'My Funnel',
-          offerType: funnelContext.offerType || 'low_ticket',
-          previewTemplate: (node.data.previewTemplate as string) || '',
-          stepTitle: (node.data.title as string) || '',
-          headline: (node.data.headline as string) || '',
-          buttonText: (node.data.buttonText as string) || '',
-        };
-        
+        const context = buildCopyContext(node);
         const generated = generateCopy(node.data.type as string, context);
         localStorage.setItem(`funnel-copy-${node.id}`, JSON.stringify(generated));
         return { ...node, data: { ...node.data, copy: generated, _copyUpdated: Date.now() } };
@@ -512,20 +507,7 @@ const newNodes: Node[] = [];
     setShowQualityReport(false);
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
-      // Regenerate copy for this single node
-      const context = {
-        productName: funnelContext.productName || 'Your Product',
-        audience: funnelContext.audience || 'your audience',
-        price: funnelContext.price || '$29',
-        problem: funnelContext.problem || 'their main challenge',
-        goal: funnelContext.goal || 'achieve their desired outcome',
-        funnelName: funnelContext.funnelName || 'My Funnel',
-        offerType: funnelContext.offerType || 'low_ticket',
-        previewTemplate: (node.data.previewTemplate as string) || '',
-        stepTitle: (node.data.title as string) || '',
-        headline: (node.data.headline as string) || '',
-        buttonText: (node.data.buttonText as string) || '',
-      };
+      const context = buildCopyContext(node);
       const generated = generateCopy(node.data.type as string, context);
       localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(generated));
       setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: generated, _copyUpdated: Date.now() } } : n));

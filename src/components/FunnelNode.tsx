@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Edit2, Eye, Trash2, Plus, Wand2, FileText } from 'lucide-react';
 import { STEP_TYPES } from './Sidebar';
+import { MiniPreview } from './MiniPreview';
 
 interface FunnelNodeData {
   title: string;
@@ -10,6 +11,7 @@ interface FunnelNodeData {
   conversion?: string;
   revenue?: string;
   copy?: any;
+  previewTemplate?: string;
   onEdit?: () => void;
   onDelete?: () => void;
   onAddNext?: (type: string) => void;
@@ -22,94 +24,144 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
   
   const hasCopy = !!data.copy;
   
+  // Default template mapping if none provided
+  const getDefaultTemplate = (type: string) => {
+    switch (type) {
+      case 'Landing Page': return 'hero_cta';
+      case 'Sales Page': return 'classic_long_form';
+      case 'Checkout': return 'simple_checkout';
+      case 'Order Bump': return 'checkbox_bump';
+      case 'Upsell': return 'upgrade_offer';
+      case 'Downsell': return 'lite_version';
+      case 'Thank You Page': return 'simple_confirmation';
+      case 'Email Follow-up': return 'five_day_sequence';
+      case 'Webinar': return 'registration_page';
+      case 'Survey': return 'simple_survey';
+      case 'Application Page': return 'simple_application';
+      case 'Booking Page': return 'calendar_booking';
+      default: return 'hero_cta';
+    }
+  };
+
+  const currentTemplate = data.previewTemplate || getDefaultTemplate(data.type);
+
+  // Get single metric based on step type
+  const renderMetric = () => {
+    switch (data.type) {
+      case 'Landing Page':
+      case 'Sales Page':
+        return { label: 'Conv:', value: data.conversion || '0%' };
+      case 'Checkout':
+        return { label: 'Rev:', value: data.revenue || '$0' };
+      case 'Order Bump':
+        return { label: 'Attach:', value: data.conversion || '0%' };
+      case 'Upsell':
+        return { label: 'Take:', value: data.conversion || '0%' };
+      case 'Downsell':
+        return { label: 'Recovery:', value: data.conversion || '0%' };
+      case 'Thank You Page':
+        return { label: 'Completed:', value: data.visitors || '0' };
+      case 'Email Follow-up':
+        return { label: 'Open:', value: data.conversion || '0%' };
+      case 'Webinar':
+        return { label: 'Registrations:', value: data.visitors || '0' };
+      case 'Survey':
+        return { label: 'Completions:', value: data.visitors || '0' };
+      case 'Application Page':
+        return { label: 'Applications:', value: data.visitors || '0' };
+      case 'Booking Page':
+        return { label: 'Bookings:', value: data.visitors || '0' };
+      default:
+        return { label: 'Conv:', value: data.conversion || '0%' };
+    }
+  };
+
+  const metric = renderMetric();
+  
+  const headline = data.copy?.headline || data.copy?.title;
+  const buttonText = data.copy?.cta || data.copy?.button;
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-[240px] h-[190px] relative group overflow-visible node-pop-in hover:shadow-md transition-all flex flex-col">
-      {/* Top color bar */}
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-[260px] relative group overflow-visible node-pop-in hover:shadow-md transition-all flex flex-col pb-2">
+      {/* 1. Colored top border */}
       <div 
         className="h-1 w-full absolute top-0 left-0 right-0 rounded-t-lg" 
         style={{ backgroundColor: stepInfo.color }} 
       />
-      
-      {/* Copy Indicator */}
-      {hasCopy && (
-        <div className="absolute top-2 right-2 text-blue-500" title="Has Generated Copy">
-          <FileText className="w-4 h-4" />
-        </div>
-      )}
 
-      <div className="p-3 flex-1 flex flex-col justify-between">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div className="w-[200px]">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-0.5 block">
-              {data.type}
-            </span>
-            <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2" title={data.title}>
-              {data.title}
-            </h3>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-1.5 mt-auto mb-2">
-          <div>
-            <div className="text-[9px] text-gray-500 mb-0.5">Visitors</div>
-            <div className="text-xs font-medium text-gray-900">{data.visitors || '0'}</div>
-          </div>
-          <div>
-            <div className="text-[9px] text-gray-500 mb-0.5">Conversion</div>
-            <div className="text-xs font-medium text-gray-900">{data.conversion || '0%'}</div>
-          </div>
-          {data.revenue && (
-            <div className="col-span-2 mt-0.5">
-              <div className="text-[9px] text-gray-500 mb-0.5">Revenue</div>
-              <div className="text-xs font-medium text-green-600">{data.revenue}</div>
-            </div>
+      <div className="p-3 flex-1 flex flex-col">
+        {/* 2. Step type label + status dot */}
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+            {data.type}
+          </span>
+          {hasCopy && (
+            <div className="w-2 h-2 rounded-full bg-green-500" title="Has Generated Copy"></div>
           )}
         </div>
 
-        {/* Action Row */}
-        <div className="flex flex-col space-y-2 mt-2">
-          {/* Write This Step Button */}
+        {/* 3. Step title */}
+        <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2 mb-2" title={data.title}>
+          {data.title}
+        </h3>
+
+        {/* 4. Mini preview area */}
+        <div className="mb-2">
+          <MiniPreview 
+            stepType={data.type} 
+            template={currentTemplate} 
+            hasCopy={hasCopy}
+            headline={headline}
+            buttonText={buttonText}
+          />
+        </div>
+
+        {/* 5. Single metric row */}
+        <div className="flex items-center text-xs font-medium text-gray-700 bg-gray-50 rounded px-2 py-1 mb-2">
+          <span className="text-gray-500 mr-1">{metric.label}</span>
+          <span>{metric.value}</span>
+        </div>
+
+        {/* 6. Action buttons row */}
+        <div className="flex space-x-1">
           <button 
             onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
-            className={`w-full py-1.5 text-xs font-medium rounded-md flex items-center justify-center transition-colors ${
+            className={`flex-1 py-1 px-1 text-[10px] font-medium rounded flex items-center justify-center transition-colors ${
               hasCopy 
-                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200' 
+                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200' 
                 : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
             }`}
           >
             {hasCopy ? (
-              <>
-                <FileText className="w-3.5 h-3.5 mr-1.5" />
-                View Copy
-              </>
+              <><FileText className="w-3 h-3 mr-1" />Write</>
             ) : (
-              <>
-                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
-                Write This Step
-              </>
+              <><Wand2 className="w-3 h-3 mr-1" />Write</>
             )}
           </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); data.onEdit?.(); }}
+            className="flex-1 py-1 px-1 text-[10px] font-medium rounded bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 flex items-center justify-center transition-colors"
+          >
+            <Edit2 className="w-3 h-3 mr-1" />
+            Edit
+          </button>
 
-          <div className="flex justify-between items-center border-t border-gray-100 pt-1.5">
-            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button 
-                onClick={(e) => { e.stopPropagation(); data.onEdit?.(); }}
-                className="p-1 text-gray-400 hover:text-blue-600 rounded"
-                title="Edit"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}
-                className="p-1 text-gray-400 hover:text-red-600 rounded"
-                title="Delete"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+          <button 
+             onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
+            className="flex-1 py-1 px-1 text-[10px] font-medium rounded bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 flex items-center justify-center transition-colors"
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Preview
+          </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}
+            className="p-1 text-gray-400 hover:text-red-600 rounded bg-gray-50 hover:bg-red-50 transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 

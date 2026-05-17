@@ -220,7 +220,25 @@ function FunnelMapInner() {
       return `${p} - ${step}`;
     };
 
-    const newNodes: Node[] = [];
+    
+const getDefaultTemplate = (type: string) => {
+  switch (type) {
+    case 'Landing Page': return 'hero_cta';
+    case 'Sales Page': return 'classic_long_form';
+    case 'Checkout': return 'simple_checkout';
+    case 'Order Bump': return 'checkbox_bump';
+    case 'Upsell': return 'upgrade_offer';
+    case 'Downsell': return 'lite_version';
+    case 'Thank You Page': return 'simple_confirmation';
+    case 'Email Follow-up': return 'five_day_sequence';
+    case 'Webinar': return 'registration_page';
+    case 'Survey': return 'simple_survey';
+    case 'Application Page': return 'simple_application';
+    case 'Booking Page': return 'calendar_booking';
+    default: return 'hero_cta';
+  }
+};
+const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
     
     let prevId = '';
@@ -254,7 +272,8 @@ function FunnelMapInner() {
           price: formData.price,
           visitors: Math.floor(Math.random() * 500 + 100).toString(),
           conversion: `${(Math.random() * 30 + 5).toFixed(1)}%`,
-          revenue: `$${Math.floor(Math.random() * 2000 + 100)}`
+          revenue: `${Math.floor(Math.random() * 2000 + 100)}`,
+          previewTemplate: getDefaultTemplate(step)
         }
       });
       
@@ -342,6 +361,7 @@ function FunnelMapInner() {
       headline: node.data.headline as string,
       buttonText: node.data.buttonText as string,
       notes: node.data.description as string,
+      previewTemplate: node.data.previewTemplate as string,
     };
     const copy = generateCopy(node.data.type as string, fullContext);
     setGeneratedCopy(copy);
@@ -391,6 +411,8 @@ function FunnelMapInner() {
     text += `## Page Copy\n\n`;
     nodes.forEach((n, idx) => {
       text += `### ${idx + 1}. ${n.data.title} — ${n.data.type}\n`;
+      const tplName = (n.data.previewTemplate) ? (n.data.previewTemplate as string).split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Default';
+      text += `**Template:** ${tplName}\n\n`;
       if (n.data.copy) {
         const copy: any = n.data.copy;
         text += `**Headline:** ${copy.headline}\n\n`;

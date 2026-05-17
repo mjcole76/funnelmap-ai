@@ -11,6 +11,11 @@ interface CopyPanelProps {
   onRegenerate: () => void;
 }
 
+const formatTemplateName = (tplId: string) => {
+  if (!tplId) return 'Default';
+  return tplId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+};
+
 export default function CopyPanel({ node, onClose, onSave, generatedCopy, onRegenerate }: CopyPanelProps) {
   const [copyData, setCopyData] = useState<any>(null);
 
@@ -85,10 +90,11 @@ export default function CopyPanel({ node, onClose, onSave, generatedCopy, onRege
               style={{ backgroundColor: stepInfo.color }}
             />
             <div>
+              
               <h2 className="text-lg font-semibold text-gray-900 leading-tight">
                 Copy Preview
               </h2>
-              <p className="text-sm text-gray-500 mt-0.5">{(node.data.title as string) || (node.data.type as string)}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{(node.data.title as string) || (node.data.type as string)} • Template: {formatTemplateName(node.data.previewTemplate as string)}</p>
             </div>
           </div>
           <button 

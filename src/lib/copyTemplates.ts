@@ -18,58 +18,132 @@ export interface GeneratedCopy {
   sections: Array<{ title: string; content: string }>;
 }
 
-// Helper: create a short product reference (last 2-3 meaningful words)
+// --- BLOCKED PHRASES GUARDRAIL ---
+const BLOCKED_PHRASES = [
+  'low conversions',
+  'sell product',
+  'generated funnel copy',
+  'want to upgrade your order?',
+  'your headline here',
+  'your content goes here',
+  'their main challenge',
+  'achieve their desired outcome',
+  'your audience',
+];
+
+function containsBlockedPhrase(text: string): boolean {
+  const lower = text.toLowerCase();
+  return BLOCKED_PHRASES.some(phrase => lower.includes(phrase));
+}
+
+function sanitize(text: string): string {
+  let result = text;
+  BLOCKED_PHRASES.forEach(phrase => {
+    const regex = new RegExp(phrase, 'gi');
+    result = result.replace(regex, '');
+  });
+  return result.replace(/\s{2,}/g, ' ').trim();
+}
+
+// --- HELPER FUNCTIONS ---
+
+// Short product name (last 2-3 words if long)
 function shortProduct(productName: string): string {
   const words = productName.split(' ').filter(w => !['the', 'a', 'an', 'my', 'your'].includes(w.toLowerCase()));
   if (words.length <= 3) return productName;
   return words.slice(-3).join(' ');
 }
 
-// Helper: create a benefit-oriented transformation of the problem
+// Transform problem into benefit verb phrase
+// "finding decent meals on the road" → "find decent meals on the road"
 function problemToBenefit(problem: string): string {
   let benefit = problem.trim();
-  if (benefit.startsWith('finding ')) benefit = 'find ' + benefit.slice(8);
-  else if (benefit.startsWith('getting ')) benefit = 'get ' + benefit.slice(8);
-  else if (benefit.startsWith('struggling with ')) benefit = benefit.slice(16);
-  else if (benefit.startsWith('not being able to ')) benefit = benefit.slice(18);
-  else if (benefit.startsWith('having trouble ')) benefit = benefit.slice(15);
-  else if (benefit.startsWith('dealing with ')) benefit = benefit.slice(13);
+  const transforms: [string, string][] = [
+    ['finding ', 'find '],
+    ['getting ', 'get '],
+    ['struggling with ', ''],
+    ['not being able to ', ''],
+    ['having trouble ', ''],
+    ['dealing with ', ''],
+    ['trying to figure out ', 'figure out '],
+    ['figuring out ', 'figure out '],
+    ['making ', 'make '],
+    ['choosing ', 'choose '],
+    ['deciding ', 'decide '],
+    ['managing ', 'manage '],
+    ['handling ', 'handle '],
+    ['keeping up with ', 'keep up with '],
+    ['staying on top of ', 'stay on top of '],
+  ];
+  for (const [prefix, replacement] of transforms) {
+    if (benefit.toLowerCase().startsWith(prefix)) {
+      benefit = replacement + benefit.slice(prefix.length);
+      break;
+    }
+  }
   return benefit;
 }
 
-// Helper: extract the core pain (before "without" clauses)
-function problemToNegative(problem: string): string {
+// Extract the core pain (before "without" clauses)
+function corePain(problem: string): string {
   if (problem.includes(' without ')) {
     return problem.split(' without ')[0].trim();
   }
   return problem;
 }
 
-// Helper: capitalize first letter
+// Capitalize first letter
 function cap(s: string): string {
+  if (!s) return '';
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Helper: singular form of audience
+// Singular form of audience
 function singularAudience(audience: string): string {
   if (audience.endsWith('ers')) return audience.slice(0, -1);
   if (audience.endsWith('ors')) return audience.slice(0, -1);
-  if (audience.endsWith('s') && !audience.endsWith('ss')) return audience.slice(0, -1);
+  if (audience.endsWith('ists')) return audience.slice(0, -1);
+  if (audience.endsWith('s') && !audience.endsWith('ss') && !audience.endsWith('us')) return audience.slice(0, -1);
   return audience;
 }
 
+// Determine if we have real context (not defaults)
+function hasRealContext(context: FunnelContext): boolean {
+  return !!(
+    context.productName &&
+    context.productName !== 'Your Product' &&
+    context.audience &&
+    context.audience !== 'your audience' &&
+    context.problem &&
+    !BLOCKED_PHRASES.includes(context.problem.toLowerCase())
+  );
+}
+
+// --- MAIN COPY GENERATION ---
+
 export function generateCopy(stepType: string, context: FunnelContext): GeneratedCopy {
   const {
-    productName = 'The Product',
-    audience = 'your audience',
+    productName = 'Your Product',
+    audience = 'your customers',
     price = '$29',
-    problem = 'the main challenge',
-    goal = 'achieve their desired outcome',
-    previewTemplate
+    problem = 'the core challenge',
+    goal = 'achieve better results',
+    previewTemplate,
   } = context;
 
+  // If context is still defaults/garbage, produce a clean "fill in your offer" message
+  if (!hasRealContext(context)) {
+    return {
+      headline: `Set up your Offer Brief to generate copy`,
+      sections: [{
+        title: 'Generated Funnel Copy',
+        content: `Open Settings and fill in your product name, audience, price, problem, and desired outcome.\n\nThe copy engine uses your Offer Brief to generate page-specific copy for every step in your funnel.\n\nNo generic filler. No placeholder text. Real copy based on your actual offer.`
+      }]
+    };
+  }
+
   const benefit = problemToBenefit(problem);
-  const pain = problemToNegative(problem);
+  const pain = corePain(problem);
   const short = shortProduct(productName);
   const singular = singularAudience(audience);
 
@@ -77,19 +151,22 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
   let bodyContent = '';
 
   switch (stepType) {
+    // ================================================================
+    // LANDING PAGE / OPT-IN PAGE
+    // ================================================================
     case 'Landing Page':
     case 'Opt-in Page': {
       if (previewTemplate === 'video_opt_in') {
-        headline = `Watch: How ${cap(audience)} Are Solving "${pain}" in Under 10 Minutes`;
+        headline = `Watch: How ${cap(audience)} Are Making Better Decisions About ${pain}`;
         bodyContent = [
-          `Video Promise: In this short video, discover the exact method ${audience} are using to ${benefit} — faster and easier than you thought possible.`,
+          `Video Promise: In this short video, discover the exact approach ${audience} are using to ${benefit} — faster and easier than you thought possible.`,
           ``,
           `What You'll Learn:`,
           `• Why most ${audience} struggle with ${pain} (it's not what you think)`,
-          `• The simple 3-step system that eliminates the guesswork`,
-          `• Real results from ${audience} who made the switch`,
+          `• The simple system that eliminates the guesswork`,
+          `• Real examples from ${audience} who made the switch`,
           ``,
-          `CTA: Watch the Free Video`
+          `CTA: Watch the Free Video`,
         ].join('\n');
       } else if (previewTemplate === 'lead_magnet') {
         headline = `Free Download: The ${short} Quick-Start Guide`;
@@ -98,11 +175,11 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           ``,
           `What's Inside:`,
           `• The complete system for ${benefit}`,
-          `• Ready-to-use templates you can apply today`,
+          `• Ready-to-use shortcuts you can apply today`,
           `• The #1 mistake ${audience} make (and how to avoid it)`,
-          `• Quick-reference sheet you can save to your phone`,
+          `• Quick-reference you can save to your phone`,
           ``,
-          `CTA: Download the Free Guide`
+          `CTA: Download the Free Guide`,
         ].join('\n');
       } else if (previewTemplate === 'checklist_opt_in') {
         headline = `The 5-Step Checklist: How to ${cap(benefit)}`;
@@ -115,7 +192,7 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           `☐ Step 4: Track your progress with the simple scorecard`,
           `☐ Step 5: Lock in the results so they stick`,
           ``,
-          `CTA: Get the Full Checklist Free`
+          `CTA: Get the Full Checklist Free`,
         ].join('\n');
       } else if (previewTemplate === 'split_layout') {
         headline = `A Simpler Way to ${cap(benefit)}`;
@@ -124,68 +201,73 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           ``,
           `Benefits:`,
           `• Works in under 2 minutes`,
-          `• No technical skills needed`,
+          `• No technical skills or setup needed`,
           `• Proven by 1,000+ ${audience}`,
           ``,
-          `CTA: Get Started Free`
+          `CTA: Get Started Free`,
         ].join('\n');
       } else {
-        // hero_cta or default
-        headline = `${cap(audience)}: ${cap(benefit)} — Without the Guesswork`;
+        // hero_cta (default)
+        headline = `${cap(benefit)} — Without the Guesswork`;
         bodyContent = [
-          `Subheadline: The free guide that shows ${audience} exactly how to ${benefit} — in under 2 minutes.`,
+          `Subheadline: Get a free guide built for ${audience} who need to ${benefit} without wasting time at every step.`,
           ``,
           `Benefits:`,
           `• Know exactly what to do instead of wasting time guessing`,
-          `• Save 20+ minutes every time with pre-filtered options`,
+          `• Save time with pre-filtered, simple options`,
           `• Works immediately — no learning curve, no setup`,
           `• Simple enough to use even when you're tired or in a rush`,
           `• Updated regularly so it stays useful long-term`,
           ``,
           `CTA: Get the Free Guide Now`,
           ``,
-          `Trust: Join 1,200+ ${audience} who already use this. No spam, unsubscribe anytime.`
+          `Trust: Free guide. No spam. Built for ${audience}.`,
         ].join('\n');
       }
       break;
     }
 
+    // ================================================================
+    // SALES PAGE
+    // ================================================================
     case 'Sales Page': {
       if (previewTemplate === 'short_offer') {
-        headline = `${productName}: The Fastest Way to ${cap(benefit)}`;
+        headline = `${cap(benefit)} in Less Time`;
         bodyContent = [
+          `${productName} helps ${audience} make faster, smarter decisions about ${pain}.`,
+          ``,
           `Key Benefits:`,
-          `• Solves "${pain}" in under 2 minutes`,
+          `• ${cap(benefit)} without the guesswork`,
           `• Built specifically for ${audience}`,
           `• Works immediately — no learning curve`,
           ``,
-          `Price: ${price}`,
+          `Price: Just ${price}`,
           ``,
           `CTA: Get ${productName} Now`,
           ``,
-          `Guarantee: 30-day money-back guarantee. Try it risk-free.`
+          `Guarantee: 30-day money-back guarantee. Try it risk-free.`,
         ].join('\n');
       } else if (previewTemplate === 'problem_solution') {
         headline = `Tired of ${pain}? There's a Better Way.`;
         bodyContent = [
           `THE PROBLEM:`,
-          `You're dealing with "${pain}" and it's costing you time, energy, and results. You've tried figuring it out on your own, but nothing sticks.`,
+          `Most solutions are not made for ${audience}. They assume you have unlimited time, endless options, and a perfect situation. That is not reality.`,
           ``,
           `THE SOLUTION:`,
-          `${productName} is the system built exactly for ${audience} who want to ${benefit} — without the complexity, without the guesswork, without settling.`,
+          `${productName} is built exactly for ${audience} who want to ${benefit} — without the complexity, without the guesswork, without settling.`,
           ``,
-          `CTA: Get the Solution — ${price}`
+          `CTA: Get the Solution — ${price}`,
         ].join('\n');
       } else if (previewTemplate === 'proof_first') {
-        headline = `"${productName} completely changed how I ${benefit}."`;
+        headline = `"${productName} made it simple to ${benefit}."`;
         bodyContent = [
           `★★★★★`,
-          `"I was struggling to ${benefit}, but ${productName} made it simple. I wish I'd found this sooner."`,
+          `"I was struggling with ${pain}, but ${productName} changed everything. I wish I'd found this sooner."`,
           `— A verified ${singular} user`,
           ``,
           `Join hundreds of ${audience} who made the switch.`,
           ``,
-          `CTA: Join Them — ${price}`
+          `CTA: Join Them — ${price}`,
         ].join('\n');
       } else if (previewTemplate === 'stacked_offer') {
         headline = `Everything You Need to ${cap(benefit)}`;
@@ -193,81 +275,101 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           `What's Included:`,
           `✓ ${productName} — Core System (Value: $49)`,
           `✓ Quick-Start Guide (Value: $19)`,
-          `✓ Bonus Templates (Value: $29)`,
+          `✓ Bonus Shortcuts (Value: $29)`,
           `✓ Priority Support (Value: $19)`,
           `✓ Lifetime Updates (Value: $49)`,
           ``,
           `Total Value: $165`,
           `Your Price Today: ${price}`,
           ``,
-          `CTA: Get Everything for ${price}`
+          `CTA: Get Everything for ${price}`,
         ].join('\n');
       } else {
-        // classic_long_form or default
-        headline = `${cap(benefit)} — In Under 2 Minutes, Every Single Time`;
+        // classic_long_form (default)
+        headline = `${cap(benefit)} in Less Time`;
         bodyContent = [
-          `Hook: You know the feeling. You need to ${benefit}, but every option seems complicated, overpriced, or just not built for ${audience} like you.`,
+          `Opening hook:`,
+          `When you are busy all day, decisions about ${pain} get old fast. You look at your options, pick whatever seems easiest, and move on. Sometimes it works. A lot of times, you wish you had chosen better.`,
           ``,
-          `Problem: Every ${singular} knows the struggle. You want to ${benefit}, but it feels like you're stuck choosing between bad options. You waste time, waste money, and end up settling for "good enough."`,
+          `${productName} is built to make that decision easier.`,
           ``,
-          `Promise: Imagine knowing exactly what to do — every time. No guesswork. No wasted effort. Just clear, simple decisions that get you the result you want.`,
+          `Problem:`,
+          `Most tools are not made for ${audience}. They assume you have a normal schedule, plenty of time, and endless choices. That is not your reality. You need answers that fit real conditions: limited options, tight schedules, and solutions that work while you keep moving.`,
+          ``,
+          `Promise:`,
+          `${productName} gives you quick guidance for real situations. Instead of guessing, you can check better choices, avoid common bad picks, and build a simple routine that works around your life.`,
           ``,
           `What You Get:`,
-          `• ${productName} (${price})`,
-          `• Complete system for ${benefit}`,
-          `• Works immediately — no setup, no learning curve`,
-          `• Built specifically for ${audience}`,
-          `• Regular updates included`,
+          `• ${productName} — the complete system`,
+          `• Decision shortcuts for common situations`,
+          `• Simple "better choice" recommendations`,
+          `• Quick-reference guides`,
+          `• Lifetime early access updates`,
           ``,
           `Benefits:`,
-          `• Save 20+ minutes every time you need to make a decision`,
-          `• Never settle for a bad option again`,
-          `• Works even when you're tired, rushed, or distracted`,
-          `• Simple enough that anyone can use it`,
-          `• Built by someone who understands ${audience}`,
+          `• ${cap(benefit)} faster when you are short on time`,
+          `• Avoid choices that make things harder later`,
+          `• Find better options even with limited choices`,
+          `• Use simple recommendations instead of complicated systems`,
+          `• Make repeatable decisions you can rely on`,
+          `• Get early access for one low lifetime price`,
           ``,
           `Who It's For:`,
-          `• ${cap(audience)} who are tired of guessing`,
-          `• Anyone who wants to ${benefit} without overthinking`,
-          `• People who value their time and want a faster way`,
-          `• Anyone who's tried other solutions and been disappointed`,
+          `• ${cap(audience)} who deal with ${pain} often`,
+          `• Anyone trying to make better decisions without overcomplicating it`,
+          `• Anyone who wants a simple tool, not another complex system`,
+          `• Anyone tired of making the same rushed decision every day`,
           ``,
-          `Guarantee: Try ${productName} for 30 days. If it doesn't help you ${benefit}, email us for a full refund. No questions asked.`,
+          `Who It's NOT For:`,
+          `• People who need a full professional consultation`,
+          `• People looking for a complex enterprise solution`,
+          `• Anyone expecting a one-size-fits-all miracle`,
           ``,
-          `CTA: Get ${productName} — ${price}`,
+          `Guarantee:`,
+          `Try it for 30 days. If it does not help you ${benefit} more easily, ask for a refund.`,
           ``,
-          `Q: How fast can I start using it?`,
-          `A: Immediately. You get access right after purchase — no waiting, no setup.`,
+          `CTA: Get Lifetime Early Access for ${price}`,
           ``,
-          `Q: Is this really built for ${audience}?`,
-          `A: Yes. Every feature was designed specifically for ${audience} dealing with "${pain}."`,
+          `FAQ:`,
+          `Q: Is this only for ${audience}?`,
+          `A: It is built around ${audience}, but anyone with a similar challenge can use it.`,
           ``,
-          `Q: What if it doesn't work for me?`,
-          `A: Full 30-day money-back guarantee. Try it risk-free.`,
+          `Q: Do I need technical skills?`,
+          `A: No. The goal is faster, simpler decisions. Anyone can use it.`,
           ``,
-          `Q: Is this a subscription?`,
-          `A: No. One-time payment of ${price}. No hidden fees, no recurring charges.`
+          `Q: Will it work for my situation?`,
+          `A: It is designed around common situations that ${audience} face regularly.`,
+          ``,
+          `Q: What does lifetime early access mean?`,
+          `A: You get access now at the early price and keep access as the product improves.`,
         ].join('\n');
       }
       break;
     }
 
+    // ================================================================
+    // CHECKOUT
+    // ================================================================
     case 'Checkout': {
-      headline = 'Complete Your Order';
+      headline = `Get ${productName} Today`;
       if (previewTemplate === 'trust_checkout') {
         bodyContent = [
-          `Summary: ${productName} — ${price}`,
+          `Order Summary:`,
+          `${productName}`,
+          `Lifetime Early Access`,
+          `${price} one-time payment`,
           ``,
-          `Included:`,
+          `What's Included:`,
           `• Full access to ${productName}`,
-          `• All features and updates`,
-          `• 30-day money-back guarantee`,
+          `• All current features and guides`,
+          `• Early access to future updates`,
+          `• No monthly subscription`,
           ``,
-          `Trust: 🔒 Secure checkout. Your payment is encrypted and protected. Instant access after purchase.`,
+          `Trust: 🔒 Secure checkout. One-time payment. No subscription.`,
           ``,
-          `Reminder: One-time payment of ${price}. No subscriptions, no hidden fees.`,
+          `Guarantee: Try ${productName} for 30 days. If it does not help you ${benefit}, request a refund.`,
           ``,
-          `CTA: Complete My Purchase — ${price}`
+          `CTA: Complete My Purchase for ${price}`,
         ].join('\n');
       } else if (previewTemplate === 'two_column') {
         bodyContent = [
@@ -282,29 +384,40 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           `Payment:`,
           `Enter your details below for instant access.`,
           ``,
-          `CTA: Pay ${price} — Get Instant Access`
+          `CTA: Pay ${price} — Get Instant Access`,
         ].join('\n');
       } else {
+        // simple_checkout (default)
         bodyContent = [
-          `Product: ${productName}`,
-          `Price: ${price}`,
+          `Order Summary:`,
+          `${productName}`,
+          `Lifetime Early Access`,
+          `${price} one-time payment`,
           ``,
-          `Included:`,
+          `What's Included:`,
           `• Full access to ${productName}`,
-          `• Instant delivery`,
-          `• 30-day money-back guarantee`,
+          `• Decision shortcuts and guides`,
+          `• Simple recommendations`,
+          `• Early access to future updates`,
+          `• No monthly subscription`,
           ``,
-          `Trust: 🔒 Secure, encrypted checkout. Instant access after purchase.`,
+          `Trust: Secure checkout. One-time payment. No subscription.`,
           ``,
-          `CTA: Complete My Purchase — ${price}`
+          `Guarantee: Try ${productName} for 30 days. If it does not help you ${benefit}, request a refund.`,
+          ``,
+          `CTA: Complete My Purchase for ${price}`,
         ].join('\n');
       }
       break;
     }
 
+    // ================================================================
+    // ORDER BUMP
+    // ================================================================
     case 'Order Bump': {
-      const bumpPrice = parseInt(price.replace(/[^0-9]/g, '')) > 20 ? '$7' : '$4';
-      const bumpName = context.stepTitle || 'Fast Track Add-On';
+      const basePrice = parseInt(price.replace(/[^0-9]/g, '')) || 29;
+      const bumpPrice = basePrice > 20 ? '$7' : '$4';
+      const bumpName = context.stepTitle && context.stepTitle !== 'Order Bump' ? context.stepTitle : 'Fast Track Add-On';
 
       if (previewTemplate === 'bonus_box') {
         headline = `🎁 Special Bonus: Add the ${bumpName}`;
@@ -316,10 +429,10 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           `• Advanced shortcuts and tips`,
           `• Printable format — works offline`,
           ``,
-          `Normally $${parseInt(bumpPrice.replace('$', '')) * 2} on its own.`,
+          `Normally $${parseInt(bumpPrice.replace('$', '')) * 3} on its own.`,
           `Yours today for just ${bumpPrice} when you add it now.`,
           ``,
-          `Checkbox: ✅ Yes, add the ${bumpName} to my order for ${bumpPrice}`
+          `☑️ Yes, add the ${bumpName} to my order for ${bumpPrice}`,
         ].join('\n');
       } else if (previewTemplate === 'cheat_sheet') {
         headline = `Add the Printable Cheat Sheet — ${bumpPrice}`;
@@ -328,143 +441,156 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
           ``,
           `• Fits on one page — print it, save it, reference it anytime`,
           `• The best options at a glance`,
-          `• No phone needed — works offline`,
+          `• Works offline — no phone needed`,
           ``,
-          `Checkbox: ✅ Yes, add the Cheat Sheet to my order for ${bumpPrice}`
+          `☑️ Yes, add the Cheat Sheet to my order for ${bumpPrice}`,
         ].join('\n');
       } else {
-        // checkbox_bump default
-        headline = `Add the ${bumpName} — Just ${bumpPrice}`;
+        // checkbox_bump (default)
+        headline = `Yes, add the ${bumpName} to my order for ${bumpPrice}`;
         bodyContent = [
-          `Get a shortcut to faster results. The ${bumpName} gives you:`,
+          `Get a simple cheat sheet you can use when you do not have time to think through your options.`,
           ``,
-          `• The top recommendations pre-filtered and ready to use`,
-          `• A printable quick-reference you can access anytime`,
-          `• Advanced tips that aren't in the main product`,
+          `What's Included:`,
+          `• Quick "better choice" lists for common situations`,
+          `• Simple swaps and shortcuts`,
+          `• Fast rules for making decisions when you are tired or rushed`,
           ``,
-          `Checkbox: ✅ Yes, add the ${bumpName} to my order for ${bumpPrice}`,
+          `A small add-on built to save you time immediately.`,
           ``,
-          `Normally sold separately. Yours for ${bumpPrice} only when you add it now.`
+          `Price: ${bumpPrice}`,
         ].join('\n');
       }
       break;
     }
 
+    // ================================================================
+    // UPSELL
+    // ================================================================
     case 'Upsell': {
-      const upsellName = context.stepTitle || `${short} Pro`;
-      const upsellPrice = '$' + (Math.max(parseInt(price.replace(/[^0-9]/g, '')) * 2, 19) || 19) + '/month';
+      const upsellName = context.stepTitle && context.stepTitle !== 'Upsell' ? context.stepTitle : `${short} Pro`;
 
-      if (previewTemplate === 'premium_bundle') {
-        headline = `You're In! Want the Complete ${short} Bundle?`;
-      } else if (previewTemplate === 'done_for_you') {
-        headline = `You're In! Want Us to Do It For You?`;
-      } else {
-        headline = `You're In! Want ${upsellName} Too?`;
-      }
-
+      headline = `Want the Complete System Too?`;
       bodyContent = [
-        `Promise: Get the done-for-you upgraded version. We handle the hard parts so you get better results with less effort.`,
+        `Subheadline: Upgrade to ${upsellName} and get a more complete planning system for ${benefit} all week.`,
+        ``,
+        `Why Now:`,
+        `You already have ${productName}. The Pro upgrade gives you a stronger plan so you are not starting from zero every day.`,
         ``,
         `What's Included:`,
-        `• Everything in the base ${productName}`,
-        `• Personalized recommendations based on your situation`,
-        `• Priority updates and new features first`,
-        `• Advanced options not available in the standard version`,
-        `• Direct support when you need help`,
+        `• Weekly planning templates`,
+        `• Advanced frameworks and guides`,
+        `• Better-choice lists for common situations`,
+        `• Quick-reference printable guide`,
+        `• Priority support`,
         ``,
         `Benefits:`,
-        `• Save 30+ minutes per day with the automated system`,
-        `• Get better results without extra effort`,
-        `• Works alongside ${productName} for full coverage`,
-        `• Cancel anytime — no commitment`,
+        `• Plan ahead before the week gets away from you`,
+        `• Know what to do when your options are limited`,
+        `• Build a repeatable routine that works`,
+        `• Make fewer rushed decisions during busy days`,
         ``,
-        `CTA: Yes! Add ${upsellName} — ${upsellPrice}`,
+        `CTA: Yes, Add ${upsellName}`,
         ``,
-        `No-Thanks: No thanks, I'll stick with the basic version.`
+        `No-thanks: No thanks, I only want the basic ${productName}.`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // DOWNSELL
+    // ================================================================
     case 'Downsell': {
-      const downsellName = context.stepTitle || `${short} Basic`;
-      const downsellPrice = '$' + Math.max(Math.floor(parseInt(price.replace(/[^0-9]/g, '')) * 0.7) || 7, 5);
+      const downsellName = context.stepTitle && context.stepTitle !== 'Downsell' ? context.stepTitle : `Quick-Start Guide`;
 
-      headline = `Not Ready for the Full Upgrade? Here's a Simpler Option.`;
+      headline = `Not Ready for Pro? Start With the ${downsellName}`;
       bodyContent = [
-        `Promise: Get ${downsellName} — a streamlined version with the essentials. Less features, but still way better than going without.`,
+        `Subheadline: Get the simpler version with the most useful shortcuts — without the full planning system.`,
         ``,
-        `What's Different:`,
-        `The full upgrade gives you personalized, automated recommendations. ${downsellName} is a one-time download — the core system without the extras. Less customization, but still effective.`,
+        `What Changed:`,
+        `This does not include the full Pro planning system. It gives you the quick-reference guide only.`,
         ``,
-        `What You Get:`,
-        `• The essential system for ${benefit}`,
-        `• Core templates and shortcuts`,
-        `• One-time purchase — no subscription`,
-        `• Printable/saveable format`,
-        `• A solid starting point`,
+        `What's Included:`,
+        `• Simple shortcuts for ${benefit}`,
+        `• Better-choice quick lists`,
+        `• One-page reference checklist`,
+        `• Quick-start instructions`,
         ``,
-        `CTA: Yes, I'll Take ${downsellName} — ${downsellPrice}`,
+        `Benefits:`,
+        `• Use it right away`,
+        `• Make faster decisions without studying a full plan`,
+        `• Keep it on your phone for easy access`,
+        `• Start small and upgrade later if you want the full system`,
         ``,
-        `No-Thanks: No thanks, I'm good with just ${productName}.`
+        `CTA: Yes, Add the ${downsellName}`,
+        ``,
+        `No-thanks: No thanks, continue to my order.`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // THANK YOU PAGE
+    // ================================================================
     case 'Thank You Page': {
-      headline = `You're In! Here's How to Get Started`;
+      headline = `You're In. Here's How to Get Started`;
       bodyContent = [
-        `Confirmation: Your purchase is confirmed. You now have full access to ${productName}.`,
+        `Subheadline: Your ${productName} access is ready.`,
+        ``,
+        `Confirmation:`,
+        `Thanks for grabbing ${productName}. You now have access to the system built to help you ${benefit} more easily.`,
         ``,
         `Next Steps:`,
-        `1. Check your email for your access link`,
-        `2. Open ${productName} on your device`,
-        `3. Use it to ${benefit} — starting right now`,
+        `1. Check your inbox for your access email.`,
+        `2. Open ${productName} and save the link somewhere easy to find.`,
+        `3. Use it the next time you need to make a decision.`,
+        `4. Start with one better choice. You do not need to overhaul everything at once.`,
         ``,
-        `Access: Your login link was sent to the email you used at checkout. Can't find it? Check spam, or email support for help.`,
+        `Support:`,
+        `If you do not see your access email within a few minutes, check your spam folder or contact support.`,
         ``,
-        `Support: Need help? Reply to your confirmation email. We typically respond within 4 hours.`,
-        ``,
-        `Bonus: Know someone who'd love ${productName}? Share your referral link and earn credit toward upgrades.`
+        `CTA: Open ${productName}`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // EMAIL FOLLOW-UP
+    // ================================================================
     case 'Email Follow-up': {
       headline = `${productName} — Follow-Up Sequence`;
       bodyContent = [
         `Email 1 — Welcome (Day 0)`,
         `Subject: You're in — here's your ${productName} access`,
-        `Preview: Welcome aboard. Here's how to get the most out of ${productName} starting today.`,
-        `Purpose: Deliver access, set expectations, encourage first use.`,
-        `CTA: Open ${productName} Now`,
+        `Body: Thanks for grabbing ${productName}. Your access is ready. Start simple — the next time you need to ${benefit}, use it to compare your options and choose one better option than you normally would. You do not need to be perfect. The goal is to make the next decision easier.`,
+        `CTA: Open ${productName}`,
         ``,
         `Email 2 — Quick Win (Day 2)`,
-        `Subject: Try this: your first result takes 30 seconds`,
-        `Preview: Here's the fastest way to ${benefit} using ${productName}.`,
-        `Purpose: Drive first engagement, show immediate value.`,
-        `CTA: Get Your First Result`,
+        `Subject: Try this next time`,
+        `Body: Here is the easiest way to use ${productName} today. Before you make your next decision, ask yourself: "What option will work best for the next few hours?" That one question changes the decision. Instead of choosing whatever is fastest, use ${productName} to look for a better option.`,
+        `CTA: Use ${productName} Now`,
         ``,
-        `Email 3 — Story (Day 4)`,
-        `Subject: How one ${singular} solved "${pain}"`,
-        `Preview: They were struggling with the same thing. Here's what changed.`,
-        `Purpose: Build belief through social proof and relatability.`,
-        `CTA: Start Using ${productName}`,
+        `Email 3 — Common Mistake (Day 4)`,
+        `Subject: The mistake that makes ${pain} harder`,
+        `Body: One of the easiest mistakes is choosing only because it is fast. Fast matters — but if the choice makes things harder later, it costs you more than a few minutes. ${productName} helps you find the better option inside the choices you already have.`,
+        `CTA: Find a Better Option`,
         ``,
-        `Email 4 — Objection Crusher (Day 6)`,
-        `Subject: Think ${benefit} is too hard? Think again.`,
-        `Preview: The #1 objection we hear — and why it's wrong.`,
-        `Purpose: Address the most common hesitation or misconception.`,
-        `CTA: See How Easy It Is`,
+        `Email 4 — Simple Routine (Day 6)`,
+        `Subject: A simple routine you can repeat`,
+        `Body: The easiest way to make better decisions is to stop treating every situation like a brand-new problem. Use a simple repeatable routine: identify your best option, avoid the choice that always backfires, and keep a backup ready. ${productName} helps you build that routine without overcomplicating things.`,
+        `CTA: Build Your Routine`,
         ``,
-        `Email 5 — Upgrade Push (Day 8)`,
-        `Subject: Your upgrade offer expires tomorrow`,
-        `Preview: The premium version is still available — but not for long.`,
-        `Purpose: Drive upsell conversions with urgency.`,
-        `CTA: Upgrade Now`
+        `Email 5 — Upgrade Reminder (Day 8)`,
+        `Subject: Want the weekly planning system too?`,
+        `Body: If ${productName} is helping, the next step is to plan ahead a little. The Pro version gives you a weekly system, quick-reference guides, and planning templates so you are not making every decision from scratch.`,
+        `CTA: See ${short} Pro`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // WEBINAR
+    // ================================================================
     case 'Webinar': {
       headline = `Free Training: How ${cap(audience)} Can ${cap(benefit)} Without the Guesswork`;
       bodyContent = [
@@ -476,11 +602,14 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
         `• Real examples from ${audience} who solved this`,
         `• Live Q&A — get your specific questions answered`,
         ``,
-        `CTA: Reserve Your Free Spot`
+        `CTA: Reserve Your Free Spot`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // SURVEY
+    // ================================================================
     case 'Survey': {
       headline = `Quick Survey: Help Us Build Better Tools for ${cap(audience)}`;
       bodyContent = [
@@ -492,30 +621,36 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
         `3. What would make a tool worth paying for?`,
         `4. How much time do you currently spend on this?`,
         ``,
-        `CTA: Submit & Get Early Access`
+        `CTA: Submit & Get Early Access`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // APPLICATION PAGE
+    // ================================================================
     case 'Application Page': {
       headline = `Apply for the ${short} Accelerator Program`;
       bodyContent = [
-        `Qualification: This program is for ${audience} who are serious about ${benefit} — faster and with expert guidance.`,
+        `Qualification: This program is for ${audience} who are serious about ${benefit} — faster and with guided support.`,
         ``,
         `Questions:`,
-        `1. What's your name?`,
+        `1. What is your name?`,
         `2. How long have you been dealing with "${pain}"?`,
-        `3. What's your biggest challenge right now?`,
+        `3. What is your biggest challenge right now?`,
         `4. What would success look like for you in 90 days?`,
         `5. Are you ready to invest in solving this?`,
         ``,
         `CTA: Submit My Application`,
         ``,
-        `Confirmation: Applications reviewed within 48 hours. If you're a fit, we'll send a booking link.`
+        `Confirmation: Applications reviewed within 48 hours. If you're a fit, we'll send a booking link.`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // BOOKING PAGE
+    // ================================================================
     case 'Booking Page': {
       headline = `Book Your Free 15-Minute Strategy Call`;
       bodyContent = [
@@ -528,16 +663,31 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
         ``,
         `Preparation: Before your call, think about your biggest challenge and what success looks like for you.`,
         ``,
-        `CTA: Book My Free Strategy Call`
+        `CTA: Book My Free Strategy Call`,
       ].join('\n');
       break;
     }
 
+    // ================================================================
+    // DEFAULT FALLBACK
+    // ================================================================
     default: {
       headline = `${cap(benefit)} — The Simple Way`;
-      bodyContent = `Discover how ${audience} are using ${productName} to ${benefit} — quickly and without the guesswork.\n\nCTA: Learn More`;
+      bodyContent = [
+        `${productName} helps ${audience} ${benefit} — quickly and without the guesswork.`,
+        ``,
+        `Built for ${audience} who want a simple, practical solution.`,
+        ``,
+        `CTA: Learn More`,
+      ].join('\n');
       break;
     }
+  }
+
+  // --- GUARDRAIL: Check for blocked phrases ---
+  if (containsBlockedPhrase(headline) || containsBlockedPhrase(bodyContent)) {
+    headline = sanitize(headline);
+    bodyContent = sanitize(bodyContent);
   }
 
   return {

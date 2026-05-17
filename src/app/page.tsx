@@ -78,8 +78,8 @@ function FunnelMapInner() {
     productName: '',
     audience: '',
     price: '',
-    problem: 'low conversions',
-    goal: 'Sell product',
+    problem: '',
+    goal: '',
     offerType: 'Low-ticket ($7-$47)'
   });
 

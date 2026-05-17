@@ -423,13 +423,13 @@ export default function PagePreview({
         <div className="max-w-2xl mx-auto">
           <div className="border border-gray-200 bg-white shadow-sm p-6 rounded-xl space-y-4">
             <div className="flex items-start">
-              <input type="checkbox" checked readOnly className="mt-1 w-5 h-5 text-red-600 rounded" />
-              <div className="ml-3">
-                <h3 className="text-lg font-bold text-red-900 flex items-center">
-                  Yes! Add {parsedHeadline} to my order
-                  <span className="ml-2 px-2 py-0.5 bg-red-600 text-white text-xs rounded-full">+ {nodePrice || '$19'}</span>
+              <input type="checkbox" checked readOnly className="mt-1 w-5 h-5 text-emerald-600 rounded" />
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                  {parsedHeadline || `Add the bonus to my order`}
+                  <span className="ml-2 px-2 py-0.5 bg-emerald-600 text-white text-xs rounded-full">+ {nodePrice || '$7'}</span>
                 </h3>
-                <p className="text-red-800 mt-2">{parsedSubheadline || parsedParagraphs[0]}</p>
+                <p className="text-gray-600 mt-2">{parsedSubheadline || parsedParagraphs[0]}</p>
               </div>
             </div>
           </div>

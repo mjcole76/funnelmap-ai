@@ -68,6 +68,8 @@ function FunnelMapInner() {
   
   const [isPublished, setIsPublished] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
+  const [isGeneratingFullCopy, setIsGeneratingFullCopy] = useState(false);
 
   const [funnelContext, setFunnelContext] = useState<FunnelContext>({
     funnelName: 'My Funnel',
@@ -119,6 +121,79 @@ function FunnelMapInner() {
     }
   }, [nodes, edges, isPublished, funnelContext, saveStatus, isLoaded]);
 
+const handleWriteFullFunnel = () => {
+    const nodesWithoutCopy = nodes.filter(n => {
+      const savedCopy = localStorage.getItem(`funnel-copy-${n.id}`) || n.data.copy;
+      return !savedCopy;
+    });
+    
+    if (nodesWithoutCopy.length === 0) {
+      setShowRewriteModal(true);
+      return;
+    }
+    
+    setIsGeneratingFullCopy(true);
+    setTimeout(() => {
+      const updatedNodes = nodes.map(node => {
+        const savedCopy = localStorage.getItem(`funnel-copy-${node.id}`) || node.data.copy;
+        if (!savedCopy) {
+          const context = {
+            productName: funnelContext.productName || 'Your Product',
+            audience: funnelContext.audience || 'your audience',
+            price: funnelContext.price || '$29',
+            problem: funnelContext.problem || 'their main challenge',
+            goal: funnelContext.goal || 'achieve their desired outcome',
+            funnelName: funnelContext.funnelName || 'My Funnel',
+            offerType: funnelContext.offerType || 'low_ticket',
+            previewTemplate: (node.data.previewTemplate as string) || '',
+            stepTitle: (node.data.title as string) || '',
+            headline: (node.data.headline as string) || '',
+            buttonText: (node.data.buttonText as string) || '',
+          };
+          
+          const generated = generateCopy(node.data.type as string, context);
+          localStorage.setItem(`funnel-copy-${node.id}`, JSON.stringify(generated));
+          return { ...node, data: { ...node.data, copy: generated, _copyUpdated: Date.now() } };
+        }
+        return node;
+      });
+      
+      setNodes(updatedNodes);
+      setSaveStatus('unsaved');
+      setIsGeneratingFullCopy(false);
+    }, 500);
+  };
+
+  const handleRewriteAll = () => {
+    setShowRewriteModal(false);
+    setIsGeneratingFullCopy(true);
+    setTimeout(() => {
+      const updatedNodes = nodes.map(node => {
+        const context = {
+          productName: funnelContext.productName || 'Your Product',
+          audience: funnelContext.audience || 'your audience',
+          price: funnelContext.price || '$29',
+          problem: funnelContext.problem || 'their main challenge',
+          goal: funnelContext.goal || 'achieve their desired outcome',
+          funnelName: funnelContext.funnelName || 'My Funnel',
+          offerType: funnelContext.offerType || 'low_ticket',
+          previewTemplate: (node.data.previewTemplate as string) || '',
+          stepTitle: (node.data.title as string) || '',
+          headline: (node.data.headline as string) || '',
+          buttonText: (node.data.buttonText as string) || '',
+        };
+        
+        const generated = generateCopy(node.data.type as string, context);
+        localStorage.setItem(`funnel-copy-${node.id}`, JSON.stringify(generated));
+        return { ...node, data: { ...node.data, copy: generated, _copyUpdated: Date.now() } };
+      });
+      
+      setNodes(updatedNodes);
+      setSaveStatus('unsaved');
+      setIsGeneratingFullCopy(false);
+    }, 500);
+  };
+
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChangeCore(changes);
     setSaveStatus('unsaved');
@@ -136,7 +211,7 @@ function FunnelMapInner() {
         type: 'smoothstep', 
         animated: true, 
         label: 'Next',
-        labelStyle: { fontSize: 11, fill: '#6B7280' },
+        labelStyle: { fontSize: '10px', color: '#9ca3af', fontWeight: 400, background: 'rgba(255,255,255,0.8)', padding: '1px 6px', borderRadius: '4px' },
         style: { stroke: '#9CA3AF', strokeWidth: 2 } 
       }, eds));
       setSaveStatus('unsaved');
@@ -207,17 +282,27 @@ function FunnelMapInner() {
       steps = ['Landing Page', 'Sales Page', 'Checkout', 'Thank You Page', 'Email Follow-up'];
     }
 
-    const getStepTitle = (step: string) => {
+    const getStepTitle = (stepType: string) => {
       const p = formData.productName || 'Product';
-      if (step === 'Landing Page') return `Free ${p} Guide`;
-      if (step === 'Sales Page') return p;
-      if (step === 'Checkout') return `${formData.price || '$97'} ${p}`;
-      if (step === 'Order Bump') return `${p} Fast Track`;
-      if (step === 'Upsell') return `${p} Pro Upgrade`;
-      if (step === 'Downsell') return `${p} Basic Edition`;
-      if (step === 'Thank You Page') return `Access Your ${p}`;
-      if (step === 'Email Follow-up') return `${p} Follow-Up Sequence`;
-      return `${p} - ${step}`;
+      const words = p.split(' ');
+      const shortName = words.length > 3 ? words.slice(-2).join(' ') : p;
+      const price = formData.price || '$97';
+      
+      switch (stepType) {
+        case 'Landing Page': return `Free ${shortName} Guide`;
+        case 'Sales Page': return p;
+        case 'Checkout': return `${price} Early Access`;
+        case 'Order Bump': return 'Fast Track Add-On';
+        case 'Upsell': return `${shortName} Pro`;
+        case 'Downsell': return `${shortName} Basic`;
+        case 'Thank You Page': return 'Access Your Purchase';
+        case 'Email Follow-up': return 'Follow-Up Sequence';
+        case 'Webinar': return `Free ${shortName} Training`;
+        case 'Survey': return 'Quick Survey';
+        case 'Application Page': return 'Apply Now';
+        case 'Booking Page': return 'Book Your Call';
+        default: return p;
+      }
     };
 
     
@@ -294,7 +379,7 @@ const newNodes: Node[] = [];
           type: 'smoothstep',
           animated: true,
           label: edgeLabel,
-          labelStyle: { fontSize: 11, fill: '#6B7280' },
+          labelStyle: { fontSize: '10px', color: '#9ca3af', fontWeight: 400, background: 'rgba(255,255,255,0.8)', padding: '1px 6px', borderRadius: '4px' },
           style: { stroke: '#9CA3AF', strokeWidth: 2 }
         });
       }
@@ -454,6 +539,8 @@ const newNodes: Node[] = [];
         onResetLayout={handleResetLayout}
         isSettingsOpen={isSettingsOpen}
         setIsSettingsOpen={setIsSettingsOpen}
+        onWriteFullFunnel={handleWriteFullFunnel}
+        isGeneratingFullCopy={isGeneratingFullCopy}
       />
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -498,6 +585,35 @@ const newNodes: Node[] = [];
           onSave={handleSaveCopy}
           onRegenerate={handleRegenerateCopy}
         />
+      )}
+
+      {showRewriteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+              ⚠️ Rewrite All Funnel Copy?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              All existing generated copy will be replaced with fresh copy based on your current funnel settings and selected templates.
+              <br/><br/>
+              This cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={() => setShowRewriteModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRewriteAll}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+              >
+                Rewrite All Copy
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

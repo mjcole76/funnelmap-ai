@@ -9,90 +9,90 @@ interface SettingsDrawerProps {
   onSave: (nodeId: string, data: any) => void;
 }
 
-const TEMPLATE_OPTIONS: Record<string, { id: string; name: string }[]> = {
+const TEMPLATE_OPTIONS: Record<string, { id: string; name: string; bestFor: string }[]> = {
   'Landing Page': [
-    { id: 'hero_cta', name: 'Hero + CTA' },
-    { id: 'lead_magnet', name: 'Lead Magnet' },
-    { id: 'split_layout', name: 'Split Layout' },
-    { id: 'checklist_opt_in', name: 'Checklist' },
-    { id: 'video_opt_in', name: 'Video Opt-in' }
+    { id: 'hero_cta', name: 'Hero + CTA', bestFor: 'Simple opt-in pages' },
+    { id: 'lead_magnet', name: 'Lead Magnet', bestFor: 'Free resource offers' },
+    { id: 'split_layout', name: 'Split Layout', bestFor: 'Image + text layouts' },
+    { id: 'checklist_opt_in', name: 'Checklist', bestFor: 'Checklist-style opt-ins' },
+    { id: 'video_opt_in', name: 'Video Opt-in', bestFor: 'Video-led pages' }
   ],
   'Sales Page': [
-    { id: 'classic_long_form', name: 'Long Form' },
-    { id: 'short_offer', name: 'Short Offer' },
-    { id: 'problem_solution', name: 'Prob/Sol' },
-    { id: 'proof_first', name: 'Proof First' },
-    { id: 'stacked_offer', name: 'Stacked' }
+    { id: 'classic_long_form', name: 'Long Form', bestFor: 'Full persuasion pages' },
+    { id: 'short_offer', name: 'Short Offer', bestFor: 'Quick, direct offers' },
+    { id: 'problem_solution', name: 'Prob/Sol', bestFor: 'Pain-focused selling' },
+    { id: 'proof_first', name: 'Proof First', bestFor: 'Testimonial-led pages' },
+    { id: 'stacked_offer', name: 'Stacked', bestFor: 'Value-stack layouts' }
   ],
   'Checkout': [
-    { id: 'simple_checkout', name: 'Simple' },
-    { id: 'order_summary', name: 'Summary' },
-    { id: 'trust_checkout', name: 'Trust' },
-    { id: 'two_column', name: '2-Column' },
-    { id: 'early_access', name: 'Early Access' }
+    { id: 'simple_checkout', name: 'Simple', bestFor: 'Minimal, fast checkout' },
+    { id: 'order_summary', name: 'Summary', bestFor: 'Itemized review' },
+    { id: 'trust_checkout', name: 'Trust', bestFor: 'Security-focused' },
+    { id: 'two_column', name: '2-Column', bestFor: 'Product + payment split' },
+    { id: 'early_access', name: 'Early Access', bestFor: 'Launch pricing' }
   ],
   'Order Bump': [
-    { id: 'checkbox_bump', name: 'Checkbox' },
-    { id: 'bonus_box', name: 'Bonus Box' },
-    { id: 'cheat_sheet', name: 'Cheat Sheet' },
-    { id: 'fast_win', name: 'Fast Win' },
-    { id: 'toolkit', name: 'Toolkit' }
+    { id: 'checkbox_bump', name: 'Checkbox', bestFor: 'Classic add-on' },
+    { id: 'bonus_box', name: 'Bonus Box', bestFor: 'Bonus framing' },
+    { id: 'cheat_sheet', name: 'Cheat Sheet', bestFor: 'Printable add-on' },
+    { id: 'fast_win', name: 'Fast Win', bestFor: 'Quick result add-on' },
+    { id: 'toolkit', name: 'Toolkit', bestFor: 'Bundle add-on' }
   ],
   'Upsell': [
-    { id: 'upgrade_offer', name: 'Upgrade' },
-    { id: 'premium_bundle', name: 'Bundle' },
-    { id: 'done_for_you', name: 'Done For You' },
-    { id: 'speed_boost', name: 'Speed Boost' },
-    { id: 'vip_access', name: 'VIP Access' }
+    { id: 'upgrade_offer', name: 'Upgrade', bestFor: 'Premium upgrade' },
+    { id: 'premium_bundle', name: 'Bundle', bestFor: 'Bundle upgrade' },
+    { id: 'done_for_you', name: 'Done For You', bestFor: 'Done-for-you service' },
+    { id: 'speed_boost', name: 'Speed Boost', bestFor: 'Fast-track offer' },
+    { id: 'vip_access', name: 'VIP Access', bestFor: 'Exclusive access' }
   ],
   'Downsell': [
-    { id: 'lite_version', name: 'Lite Ver' },
-    { id: 'payment_plan', name: 'Payment Plan' },
-    { id: 'starter_offer', name: 'Starter' },
-    { id: 'single_resource', name: 'Single Res' },
-    { id: 'trial_offer', name: 'Trial Offer' }
+    { id: 'lite_version', name: 'Lite Ver', bestFor: 'Reduced scope offer' },
+    { id: 'payment_plan', name: 'Payment Plan', bestFor: 'Split payment option' },
+    { id: 'starter_offer', name: 'Starter', bestFor: 'Entry-level product' },
+    { id: 'single_resource', name: 'Single Res', bestFor: 'One resource only' },
+    { id: 'trial_offer', name: 'Trial Offer', bestFor: 'Free trial' }
   ],
   'Thank You Page': [
-    { id: 'simple_confirmation', name: 'Simple' },
-    { id: 'access_instructions', name: 'Steps' },
-    { id: 'next_steps', name: 'Next Steps' },
-    { id: 'bonus_delivery', name: 'Bonus' },
-    { id: 'community_invite', name: 'Community' }
+    { id: 'simple_confirmation', name: 'Simple', bestFor: 'Basic confirmation' },
+    { id: 'access_instructions', name: 'Steps', bestFor: 'How to get started' },
+    { id: 'next_steps', name: 'Next Steps', bestFor: 'Clear next actions' },
+    { id: 'bonus_delivery', name: 'Bonus', bestFor: 'Surprise bonus' },
+    { id: 'community_invite', name: 'Community', bestFor: 'Group invite' }
   ],
   'Email Follow-up': [
-    { id: 'five_day_sequence', name: '5-Day' },
-    { id: 'welcome_sequence', name: 'Welcome' },
-    { id: 'abandoned_checkout', name: 'Abandoned' },
-    { id: 'post_purchase_nurture', name: 'Nurture' },
-    { id: 'promo_sequence', name: 'Promo' }
+    { id: 'five_day_sequence', name: '5-Day', bestFor: '5-email nurture' },
+    { id: 'welcome_sequence', name: 'Welcome', bestFor: 'Onboarding series' },
+    { id: 'abandoned_checkout', name: 'Abandoned', bestFor: 'Cart recovery' },
+    { id: 'post_purchase_nurture', name: 'Nurture', bestFor: 'Post-sale nurture' },
+    { id: 'promo_sequence', name: 'Promo', bestFor: 'Promotional series' }
   ],
   'Webinar': [
-    { id: 'registration_page', name: 'Register' },
-    { id: 'training_invite', name: 'Invite' },
-    { id: 'countdown_page', name: 'Countdown' },
-    { id: 'speaker_feature', name: 'Speaker' },
-    { id: 'replay_page', name: 'Replay' }
+    { id: 'registration_page', name: 'Register', bestFor: 'Registration page' },
+    { id: 'training_invite', name: 'Invite', bestFor: 'Training invite' },
+    { id: 'countdown_page', name: 'Countdown', bestFor: 'Urgency/countdown' },
+    { id: 'speaker_feature', name: 'Speaker', bestFor: 'Speaker-focused' },
+    { id: 'replay_page', name: 'Replay', bestFor: 'Replay access' }
   ],
   'Survey': [
-    { id: 'simple_survey', name: 'Simple' },
-    { id: 'buyer_research', name: 'Research' },
-    { id: 'quiz_funnel', name: 'Quiz' },
-    { id: 'feedback_form', name: 'Feedback' },
-    { id: 'qualification_survey', name: 'Qualify' }
+    { id: 'simple_survey', name: 'Simple', bestFor: 'Quick feedback' },
+    { id: 'buyer_research', name: 'Research', bestFor: 'Market research' },
+    { id: 'quiz_funnel', name: 'Quiz', bestFor: 'Quiz-style funnel' },
+    { id: 'feedback_form', name: 'Feedback', bestFor: 'Post-purchase feedback' },
+    { id: 'qualification_survey', name: 'Qualify', bestFor: 'Lead qualification' }
   ],
   'Application Page': [
-    { id: 'simple_application', name: 'Simple' },
-    { id: 'qualification_form', name: 'Qualify' },
-    { id: 'coaching_application', name: 'Coaching' },
-    { id: 'service_intake', name: 'Intake' },
-    { id: 'high_ticket_filter', name: 'Filter' }
+    { id: 'simple_application', name: 'Simple', bestFor: 'Basic application' },
+    { id: 'qualification_form', name: 'Qualify', bestFor: 'Qualified leads' },
+    { id: 'coaching_application', name: 'Coaching', bestFor: 'Coaching intake' },
+    { id: 'service_intake', name: 'Intake', bestFor: 'Service request' },
+    { id: 'high_ticket_filter', name: 'Filter', bestFor: 'High-ticket filter' }
   ],
   'Booking Page': [
-    { id: 'calendar_booking', name: 'Calendar' },
-    { id: 'discovery_call', name: 'Discovery' },
-    { id: 'strategy_session', name: 'Strategy' },
-    { id: 'demo_call', name: 'Demo' },
-    { id: 'consultation_page', name: 'Consult' }
+    { id: 'calendar_booking', name: 'Calendar', bestFor: 'Calendar embed' },
+    { id: 'discovery_call', name: 'Discovery', bestFor: 'Discovery call' },
+    { id: 'strategy_session', name: 'Strategy', bestFor: 'Strategy session' },
+    { id: 'demo_call', name: 'Demo', bestFor: 'Product demo' },
+    { id: 'consultation_page', name: 'Consult', bestFor: 'Consultation' }
   ]
 };
 
@@ -190,24 +190,17 @@ export default function SettingsDrawer({ node, onClose, onSave }: SettingsDrawer
                   <button
                     key={tpl.id}
                     onClick={() => handleTemplateSelect(tpl.id)}
-                    className={`flex flex-col items-center p-1 rounded-md border transition-all ${
+                    className={`flex flex-col items-center p-2 rounded-md border transition-all ${
                       formData.previewTemplate === tpl.id 
                         ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
                         : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
                     }`}
                   >
-                    <div className="w-full h-[60px] pointer-events-none transform scale-75 origin-top">
-                      <MiniPreview 
-                        stepType={formData.type} 
-                        template={tpl.id} 
-                        headline={formData.headline}
-                        buttonText={formData.buttonText}
-                        price={formData.price}
-                        hasCopy={!!node.data.copy}
-                      />
-                    </div>
-                    <span className={`text-[10px] mt-1 ${formData.previewTemplate === tpl.id ? 'text-blue-700 font-medium' : 'text-gray-600'}`}>
+                    <span className={`text-xs font-semibold mb-1 ${formData.previewTemplate === tpl.id ? 'text-blue-700' : 'text-gray-800'}`}>
                       {tpl.name}
+                    </span>
+                    <span className="text-[10px] text-gray-500 text-center leading-tight">
+                      {tpl.bestFor}
                     </span>
                   </button>
                 ))}

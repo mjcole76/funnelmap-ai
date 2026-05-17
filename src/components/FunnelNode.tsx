@@ -45,6 +45,20 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
 
   const currentTemplate = data.previewTemplate || getDefaultTemplate(data.type);
 
+  const getReadableTemplateName = (tplId: string) => {
+    const map: Record<string, string> = {
+      'hero_cta': 'Hero + CTA',
+      'classic_long_form': 'Classic Long Form',
+      'simple_checkout': 'Simple Checkout',
+      'checkbox_bump': 'Checkbox Bump',
+      'upgrade_offer': 'Upgrade Offer',
+      'lite_version': 'Lite Version',
+      'simple_confirmation': 'Simple Confirmation',
+      'five_day_sequence': '5-Day Sequence',
+    };
+    return map[tplId] || tplId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  };
+
   // Get single metric based on step type
   const renderMetric = () => {
     switch (data.type) {
@@ -91,13 +105,16 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
 
       <div className="p-3 flex-1 flex flex-col">
         {/* 2. Step type label + status dot */}
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
-            {data.type}
-          </span>
-          {hasCopy && (
-            <div className="w-2 h-2 rounded-full bg-green-500" title="Has Generated Copy"></div>
-          )}
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 flex items-center">
+              {data.type}
+              {hasCopy && (
+                <div className="w-2 h-2 rounded-full bg-green-500 ml-2" title="Has Generated Copy"></div>
+              )}
+            </span>
+            <span className="text-[10px] text-gray-400 mt-0.5">{getReadableTemplateName(currentTemplate)}</span>
+          </div>
         </div>
 
         {/* 3. Step title */}

@@ -17,6 +17,8 @@ interface HeaderProps {
   onResetLayout?: () => void;
   isSettingsOpen?: boolean;
   setIsSettingsOpen?: (isOpen: boolean) => void;
+  onWriteFullFunnel?: () => void;
+  isGeneratingFullCopy?: boolean;
 }
 
 export default function Header({ 
@@ -33,7 +35,9 @@ export default function Header({
   onAutoArrange,
   onResetLayout,
   isSettingsOpen = false,
-  setIsSettingsOpen
+  setIsSettingsOpen,
+  onWriteFullFunnel,
+  isGeneratingFullCopy
 }: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showSettingsModalLocal, setShowSettingsModalLocal] = useState(false);
@@ -125,6 +129,17 @@ export default function Header({
           </div>
 
           <div className="flex items-center space-x-3">
+            {onWriteFullFunnel && (
+              <button 
+                onClick={onWriteFullFunnel}
+                disabled={isGeneratingFullCopy}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                <Wand2 className="w-4 h-4 mr-1.5" />
+                {isGeneratingFullCopy ? 'Generating...' : 'Write Full Funnel'}
+              </button>
+            )}
+
             <button 
               onClick={() => setShowGenerateModal(true)}
               className="flex items-center px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"

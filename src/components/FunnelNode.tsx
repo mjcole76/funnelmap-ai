@@ -23,7 +23,7 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
   const hasCopy = !!data.copy;
   
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-[240px] h-[160px] relative group overflow-visible node-pop-in hover:shadow-md transition-all flex flex-col">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-[240px] h-[190px] relative group overflow-visible node-pop-in hover:shadow-md transition-all flex flex-col">
       {/* Top color bar */}
       <div 
         className="h-1 w-full absolute top-0 left-0 right-0 rounded-t-lg" 
@@ -40,11 +40,11 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
       <div className="p-3 flex-1 flex flex-col justify-between">
         {/* Header */}
         <div className="flex justify-between items-start">
-          <div className="w-[180px]">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-0.5 block">
+          <div className="w-[200px]">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-0.5 block">
               {data.type}
             </span>
-            <h3 className="text-sm font-semibold text-gray-900 truncate" title={data.title}>
+            <h3 className="text-sm font-bold text-gray-900 leading-tight line-clamp-2" title={data.title}>
               {data.title}
             </h3>
           </div>
@@ -69,29 +69,46 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
         </div>
 
         {/* Action Row */}
-        <div className="flex justify-between items-center border-t border-gray-100 pt-1.5">
-          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button 
-              onClick={(e) => { e.stopPropagation(); data.onEdit?.(); }}
-              className="p-1 text-gray-400 hover:text-blue-600 rounded"
-              title="Edit"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
-              className="p-1 text-gray-400 hover:text-blue-600 rounded"
-              title="Generate Copy"
-            >
-              <Wand2 className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}
-              className="p-1 text-gray-400 hover:text-red-600 rounded"
-              title="Delete"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+        <div className="flex flex-col space-y-2 mt-2">
+          {/* Write This Step Button */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
+            className={`w-full py-1.5 text-xs font-medium rounded-md flex items-center justify-center transition-colors ${
+              hasCopy 
+                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200' 
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+            }`}
+          >
+            {hasCopy ? (
+              <>
+                <FileText className="w-3.5 h-3.5 mr-1.5" />
+                View Copy
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                Write This Step
+              </>
+            )}
+          </button>
+
+          <div className="flex justify-between items-center border-t border-gray-100 pt-1.5">
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button 
+                onClick={(e) => { e.stopPropagation(); data.onEdit?.(); }}
+                className="p-1 text-gray-400 hover:text-blue-600 rounded"
+                title="Edit"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); data.onDelete?.(); }}
+                className="p-1 text-gray-400 hover:text-red-600 rounded"
+                title="Delete"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

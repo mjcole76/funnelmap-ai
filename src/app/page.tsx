@@ -14,6 +14,47 @@ import { FunnelContext, generateCopy } from '../lib/copyTemplates';
 
 const STORAGE_KEY = 'funnelmap-ai-state';
 
+const topologicalSort = (nodes: Node[], edges: Edge[]) => {
+  const inDegree = new Map<string, number>();
+  const adjList = new Map<string, string[]>();
+
+  nodes.forEach(n => {
+    inDegree.set(n.id, 0);
+    adjList.set(n.id, []);
+  });
+
+  edges.forEach(e => {
+    adjList.get(e.source)?.push(e.target);
+    inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
+  });
+
+  const queue: string[] = [];
+  inDegree.forEach((degree, id) => {
+    if (degree === 0) queue.push(id);
+  });
+
+  const sortedIds: string[] = [];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    sortedIds.push(current);
+    const neighbors = adjList.get(current) || [];
+    for (const neighbor of neighbors) {
+      inDegree.set(neighbor, (inDegree.get(neighbor) || 0) - 1);
+      if (inDegree.get(neighbor) === 0) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  nodes.forEach(n => {
+    if (!sortedIds.includes(n.id)) {
+      sortedIds.push(n.id);
+    }
+  });
+
+  return sortedIds.map(id => nodes.find(n => n.id === id)!);
+};
+
 function FunnelMapInner() {
   const [nodes, setNodes, onNodesChangeCore] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChangeCore] = useEdgesState<Edge>([]);
@@ -23,6 +64,7 @@ function FunnelMapInner() {
   const [copyPanelNode, setCopyPanelNode] = useState<Node | null>(null);
   const [generatedCopy, setGeneratedCopy] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const [isPublished, setIsPublished] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -89,7 +131,14 @@ function FunnelMapInner() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#9CA3AF', strokeWidth: 2 } }, eds));
+      setEdges((eds) => addEdge({ 
+        ...params, 
+        type: 'smoothstep', 
+        animated: true, 
+        label: 'Next',
+        labelStyle: { fontSize: 11, fill: '#6B7280' },
+        style: { stroke: '#9CA3AF', strokeWidth: 2 } 
+      }, eds));
       setSaveStatus('unsaved');
     },
     [setEdges]
@@ -118,8 +167,6 @@ function FunnelMapInner() {
       })
     );
     setSaveStatus('unsaved');
-    // Optional: show toast or auto-close
-    // setCopyPanelNode(null);
   };
 
   const handlePublish = () => {
@@ -144,34 +191,62 @@ function FunnelMapInner() {
     let steps: string[] = [];
     if (formData.goal === 'Sell product') {
       if (formData.offerType.includes('Low')) {
-        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Order Bump', 'Upsell', 'Thank You Page'];
+        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Order Bump', 'Upsell', 'Downsell', 'Thank You Page', 'Email Follow-up'];
       } else if (formData.offerType.includes('Mid')) {
-        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Upsell', 'Downsell', 'Thank You Page'];
+        steps = ['Landing Page', 'Sales Page', 'Checkout', 'Upsell', 'Downsell', 'Thank You Page', 'Email Follow-up'];
       } else {
-        steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page'];
+        steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page', 'Email Follow-up'];
       }
     } else if (formData.goal === 'Collect leads') {
       steps = ['Landing Page', 'Opt-in Page', 'Thank You Page', 'Email Follow-up'];
     } else if (formData.goal === 'Book calls') {
-      steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page'];
+      steps = ['Landing Page', 'Application Page', 'Booking Page', 'Thank You Page', 'Email Follow-up'];
     } else if (formData.goal === 'Webinar registration') {
-      steps = ['Landing Page', 'Opt-in Page', 'Webinar', 'Sales Page', 'Checkout', 'Thank You Page'];
+      steps = ['Landing Page', 'Opt-in Page', 'Webinar', 'Sales Page', 'Checkout', 'Thank You Page', 'Email Follow-up'];
     } else {
-      steps = ['Landing Page', 'Sales Page', 'Checkout', 'Thank You Page'];
+      steps = ['Landing Page', 'Sales Page', 'Checkout', 'Thank You Page', 'Email Follow-up'];
     }
+
+    const getStepTitle = (step: string) => {
+      const p = formData.productName || 'Product';
+      if (step === 'Landing Page') return `Free ${p} Guide`;
+      if (step === 'Sales Page') return p;
+      if (step === 'Checkout') return `${formData.price || '$97'} ${p}`;
+      if (step === 'Order Bump') return `${p} Fast Track`;
+      if (step === 'Upsell') return `${p} Pro Upgrade`;
+      if (step === 'Downsell') return `${p} Basic Edition`;
+      if (step === 'Thank You Page') return `Access Your ${p}`;
+      if (step === 'Email Follow-up') return `${p} Follow-Up Sequence`;
+      return `${p} - ${step}`;
+    };
 
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
     
     let prevId = '';
+    let prevStep = '';
+    
     steps.forEach((step, index) => {
       const id = uuidv4();
+      
+      const CARDS_PER_ROW = 4;
+      const X_SPACING = 320;
+      const Y_SPACING = 300;
+      const START_X = 50;
+      const START_Y = 100;
+      
+      const row = Math.floor(index / CARDS_PER_ROW);
+      const col = index % CARDS_PER_ROW;
+      
+      const x = START_X + col * X_SPACING;
+      const y = START_Y + row * Y_SPACING;
+
       newNodes.push({
         id,
         type: 'funnelNode',
-        position: { x: index * 320, y: 150 },
+        position: { x, y },
         data: {
-          title: `${formData.productName} - ${step}`,
+          title: getStepTitle(step),
           type: step,
           url: step.toLowerCase().replace(/\s+/g, '-'),
           headline: `Discover ${formData.productName}`,
@@ -184,16 +259,28 @@ function FunnelMapInner() {
       });
       
       if (prevId) {
+        let edgeLabel = 'Next';
+        if (prevStep === 'Checkout') {
+           edgeLabel = 'Buys';
+        } else if (prevStep === 'Upsell') {
+           edgeLabel = step === 'Downsell' ? 'Declines' : 'Accepts';
+        } else if (prevStep === 'Downsell') {
+           edgeLabel = 'Accepts';
+        }
+
         newEdges.push({
           id: `e-${prevId}-${id}`,
           source: prevId,
           target: id,
           type: 'smoothstep',
           animated: true,
+          label: edgeLabel,
+          labelStyle: { fontSize: 11, fill: '#6B7280' },
           style: { stroke: '#9CA3AF', strokeWidth: 2 }
         });
       }
       prevId = id;
+      prevStep = step;
     });
 
     setNodes(newNodes);
@@ -201,7 +288,49 @@ function FunnelMapInner() {
     setSaveStatus('unsaved');
   };
 
+  const handleAutoArrange = () => {
+    const sorted = topologicalSort(nodes, edges);
+    const CARDS_PER_ROW = 4;
+    const X_SPACING = 320;
+    const Y_SPACING = 300;
+    
+    const repositioned = sorted.map((node, index) => ({
+      ...node,
+      position: {
+        x: 50 + (index % CARDS_PER_ROW) * X_SPACING,
+        y: 100 + Math.floor(index / CARDS_PER_ROW) * Y_SPACING
+      }
+    }));
+    
+    setNodes(repositioned);
+    setSaveStatus('unsaved');
+  };
+
+  const handleResetLayout = () => {
+    const sorted = [...nodes].sort((a, b) => a.id.localeCompare(b.id)); // simple sort
+    const CARDS_PER_ROW = 4;
+    const X_SPACING = 320;
+    const Y_SPACING = 300;
+    
+    const repositioned = sorted.map((node, index) => ({
+      ...node,
+      position: {
+        x: 50 + (index % CARDS_PER_ROW) * X_SPACING,
+        y: 100 + Math.floor(index / CARDS_PER_ROW) * Y_SPACING
+      }
+    }));
+    
+    setNodes(repositioned);
+    setSaveStatus('unsaved');
+  };
+
   const handleGenerateCopy = (node: Node) => {
+    if (!funnelContext.productName) {
+      if (window.confirm("Set up your funnel context first to write copy. Open Settings now?")) {
+        setIsSettingsOpen(true);
+      }
+      return;
+    }
     setCopyPanelNode(node);
     doGenerateCopy(node);
   };
@@ -299,6 +428,10 @@ function FunnelMapInner() {
         funnelContext={funnelContext}
         setFunnelContext={(ctx) => { setFunnelContext(ctx); setSaveStatus('unsaved'); }}
         onExportFunnel={handleExportFunnel}
+        onAutoArrange={handleAutoArrange}
+        onResetLayout={handleResetLayout}
+        isSettingsOpen={isSettingsOpen}
+        setIsSettingsOpen={setIsSettingsOpen}
       />
       
       <div className="flex flex-1 overflow-hidden relative">

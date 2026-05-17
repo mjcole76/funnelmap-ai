@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings, LayoutGrid, RefreshCcw } from 'lucide-react';
 import { FunnelContext } from '../lib/copyTemplates';
 
 interface HeaderProps {
@@ -13,11 +13,34 @@ interface HeaderProps {
   funnelContext: FunnelContext | null;
   setFunnelContext: (context: FunnelContext) => void;
   onExportFunnel: () => void;
+  onAutoArrange?: () => void;
+  onResetLayout?: () => void;
+  isSettingsOpen?: boolean;
+  setIsSettingsOpen?: (isOpen: boolean) => void;
 }
 
-export default function Header({ saveStatus, onPreview, isPublished, onPublish, onUnpublish, onClearAll, onGenerate, funnelContext, setFunnelContext, onExportFunnel }: HeaderProps) {
+export default function Header({ 
+  saveStatus, 
+  onPreview, 
+  isPublished, 
+  onPublish, 
+  onUnpublish, 
+  onClearAll, 
+  onGenerate, 
+  funnelContext, 
+  setFunnelContext, 
+  onExportFunnel,
+  onAutoArrange,
+  onResetLayout,
+  isSettingsOpen = false,
+  setIsSettingsOpen
+}: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSettingsModalLocal, setShowSettingsModalLocal] = useState(false);
+  
+  const showSettingsModal = setIsSettingsOpen ? isSettingsOpen : showSettingsModalLocal;
+  const setShowSettingsModal = setIsSettingsOpen ? setIsSettingsOpen : setShowSettingsModalLocal;
+
   const [formData, setFormData] = useState({
     funnelName: 'My Funnel',
     productName: '',
@@ -27,6 +50,12 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
     goal: 'Sell product',
     offerType: 'Low-ticket ($7-$47)'
   });
+
+  useEffect(() => {
+    if (showSettingsModal && funnelContext) {
+      setFormData(funnelContext as any);
+    }
+  }, [showSettingsModal, funnelContext]);
 
   const handleGenerate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +85,21 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
             <LayoutTemplate className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-semibold text-gray-900 tracking-tight">FunnelMap AI</h1>
+          
+          {funnelContext && funnelContext.productName && (
+            <button 
+              onClick={openSettings}
+              className="ml-4 px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-xs text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center"
+              title="Edit Funnel Settings"
+            >
+              <span className="mr-1.5">📋</span>
+              {funnelContext.productName}
+              {funnelContext.audience && <span className="mx-1.5 text-gray-400">•</span>}
+              {funnelContext.audience}
+              {funnelContext.price && <span className="mx-1.5 text-gray-400">•</span>}
+              {funnelContext.price}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center space-x-6">
@@ -94,8 +138,28 @@ export default function Header({ saveStatus, onPreview, isPublished, onPublish, 
               className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             >
               <Download className="w-4 h-4 mr-1.5" />
-              Export Funnel
+              Export
             </button>
+            
+            {onAutoArrange && (
+              <button 
+                onClick={onAutoArrange}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                title="Auto-Arrange Layout"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+            )}
+
+            {onResetLayout && (
+              <button 
+                onClick={onResetLayout}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                title="Reset Layout"
+              >
+                <RefreshCcw className="w-4 h-4" />
+              </button>
+            )}
             
             <button 
               onClick={openSettings}

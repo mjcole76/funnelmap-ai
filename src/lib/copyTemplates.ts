@@ -18,149 +18,279 @@ export interface GeneratedCopy {
 }
 
 export function generateCopy(stepType: string, context: FunnelContext): GeneratedCopy {
-  const { productName = '[Product]', audience = '[Audience]', price = '[Price]', problem = '[Problem]' } = context;
+  const { 
+    productName = 'The Product', 
+    audience = 'your audience', 
+    price = '$99', 
+    problem = 'the main problem',
+    goal = 'their goal'
+  } = context;
+
+  let headline = '';
+  let bodyContent = '';
 
   switch (stepType) {
+    case 'Landing Page':
     case 'Opt-in Page':
-      return {
-        headline: `Free Guide: How to solve ${problem} for ${audience}`,
-        sections: [
-          { title: 'Subheadline', content: `Stop struggling with ${problem}. Discover the proven framework.` },
-          { title: 'Benefits', content: `• Learn the #1 mistake ${audience} make\n• A step-by-step system\n• Save time and energy\n• Actionable tips you can use today\n• Exclusive access to our framework` },
-          { title: 'Form CTA', content: `Get Instant Access` },
-          { title: 'Trust note', content: `No spam, unsubscribe anytime` }
-        ]
-      };
+      headline = `Stop Wasting Time Struggling With ${problem}`;
+      bodyContent = `Subheadline: The free guide that helps ${audience} solve ${problem} and achieve ${goal} — in under 10 minutes.
+
+Benefits:
+• Find the exact solution to ${problem} without the usual frustration
+• Save hours of wasted effort with our pre-filtered options
+• Never settle for mediocre results again
+• Works instantly — no complex setup needed
+• Updated regularly with the latest strategies
+
+CTA: Get Your Free Guide Now
+
+Trust: Join thousands of ${audience} already getting better results. No spam, unsubscribe anytime.`;
+      break;
+
     case 'Sales Page':
-      return {
-        headline: `The Ultimate ${productName} for ${audience}`,
-        sections: [
-          { title: 'Hook', content: `Are you tired of dealing with ${problem}? What if there was a better way?` },
-          { title: 'Problem', content: `Most ${audience} struggle with ${problem} because they lack the right tools. It leads to frustration, lost time, and missed opportunities. You've probably tried other solutions that promised the world but delivered nothing.` },
-          { title: 'Promise', content: `Imagine waking up tomorrow with a clear path forward. With ${productName}, you'll finally be able to overcome ${problem} and achieve your goals faster than ever.` },
-          { title: 'Offer Stack', content: `• ${productName} Core System ($X value)\n• Bonus 1: Implementation Guide ($Y value)\n• Bonus 2: Templates ($Z value)\n• Access to Community ($W value)` },
-          { title: 'Benefits', content: `• Instant clarity on your next steps\n• Proven frameworks that work\n• Lifetime access to updates\n• Expert support when you need it\n• No technical skills required\n• Money-back guarantee\n• Join 1000+ happy customers` },
-          { title: 'Who It\'s For', content: `• ${audience} ready to take action\n• People frustrated with ${problem}\n• Those looking for a proven system\n• Beginners and experts alike` },
-          { title: 'Who It\'s NOT For', content: `• People who aren't willing to do the work\n• Those looking for a "get rich quick" scheme\n• Anyone not serious about solving ${problem}` },
-          { title: 'Guarantee', content: `30-day money-back guarantee. Try it risk-free.` },
-          { title: 'CTA', content: `Get ${productName} Now for ${price}` },
-          { title: 'FAQ', content: `Q: How long do I have access?\nA: Lifetime access!\n\nQ: Is there a refund policy?\nA: Yes, 30 days.\n\nQ: Do I need experience?\nA: No, it's beginner-friendly.\n\nQ: When do I get access?\nA: Immediately after purchase.\n\nQ: How do I get support?\nA: Email us anytime.` }
-        ]
-      };
+      headline = `Overcome ${problem} Faster Than Ever`;
+      bodyContent = `Hook: You've been trying to solve ${problem} for a while now. You're exhausted, frustrated, and the only options you can see just don't seem to work...
+
+Problem: Every one of the ${audience} knows the feeling. You want to achieve ${goal} without the hassle, but dealing with ${problem} feels impossible. You end up settling for whatever's closest, spending too much time, and feeling like you're spinning your wheels.
+
+Promise: Imagine waking up and knowing exactly what to do — a proven system that works, costs just ${price}, and won't wreck your schedule.
+
+What You Get:
+- ${productName} (${price} early access)
+- Comprehensive database of solutions
+- Time-saving templates and recommendations
+- Offline mode for when you're disconnected
+- Regular updates
+
+Benefits:
+• Clear solutions to ${problem} clearly marked
+• Budget-friendly strategies
+• Works for all types of ${audience}
+• Simple to use — just open and go
+• Built by experts, for ${audience}
+
+Who It's For:
+• ${audience} who deal with ${problem} regularly
+• Anyone trying to achieve ${goal}
+• People sick of guessing what works
+• Those who want to save time and money
+
+Guarantee: Try it for 30 days. If ${productName} doesn't save you time and help you overcome ${problem}, email us and we'll refund every penny. No questions.
+
+CTA: Get ${productName} — ${price} Early Access
+
+FAQ:
+Q: Will this work for my specific situation?
+A: Yes. We've built this specifically for ${audience} dealing with ${problem}.
+
+Q: Is it easy to use?
+A: Absolutely. No technical skills required.
+
+Q: Can I get a refund?
+A: Yes. 30-day money-back guarantee, no questions asked.`;
+      break;
+
     case 'Checkout':
-      return {
-        headline: `Complete Your Order`,
-        sections: [
-          { title: 'Order Summary', content: `${productName} - ${price}` },
-          { title: 'What\'s Included', content: `• Lifetime access to ${productName}\n• All bonuses mentioned\n• Priority support` },
-          { title: 'Trust Copy', content: `Secure 256-bit SSL encryption. Instant access after payment.` },
-          { title: 'Payment Reminder', content: `One-time payment of ${price}. No hidden fees.` },
-          { title: 'Final CTA', content: `Complete Purchase` }
-        ]
-      };
+      headline = `Complete Your Order`;
+      bodyContent = `Summary: ${productName} — Early Access (${price})
+
+Included:
+• Full access to ${productName}
+• Complete system to solve ${problem}
+• Time-saving tools and templates
+• Priority support
+• Regular updates
+
+Trust: 🔒 Secure checkout. Your payment is encrypted and protected. Instant access after purchase.
+
+Reminder: One-time payment of ${price}. No subscriptions, no hidden fees.
+
+CTA: Complete My Purchase — ${price}`;
+      break;
+
     case 'Order Bump':
-      return {
-        headline: `Wait! Add [Bump Product] for just [bump price]`,
-        sections: [
-          { title: 'Pitch', content: `Want to get results even faster? Add our VIP implementation pack. It pairs perfectly with ${productName}.` },
-          { title: 'Benefits', content: `• Done-for-you templates\n• Video walkthroughs\n• Expert review` },
-          { title: 'Checkbox Copy', content: `Yes! Add this to my order` },
-          { title: 'Price Justification', content: `Normally $97, yours today for just $27.` }
-        ]
-      };
+      headline = `Add the Ultimate Cheat Sheet — Just $9`;
+      bodyContent = `Pitch: Get a printable one-page cheat sheet with the top strategies to solve ${problem} instantly. Keep it handy and never think twice about what to do next.
+
+Bullets:
+• Top 3 proven strategies
+• All designed for maximum efficiency
+• Printable PDF — works without your phone
+
+Checkbox: ✅ Yes! Add the Cheat Sheet to my order for $9
+
+Justification: Normally $29 on its own. Yours today for just $9 when you add it now.`;
+      break;
+
     case 'Upsell':
-      return {
-        headline: `You're In! But Before You Go...`,
-        sections: [
-          { title: 'Upgrade Promise', content: `Upgrade your order to get the advanced mastery course.` },
-          { title: 'Why Now', content: `This is a one-time offer. You won't see this price again.` },
-          { title: 'What\'s Included', content: `• Advanced modules\n• 1-on-1 coaching call\n• VIP community access\n• Software templates` },
-          { title: 'Benefits', content: `• Skip the trial and error\n• Get personalized feedback\n• Network with top performers\n• Save hundreds of hours\n• Guarantee your success` },
-          { title: 'CTA', content: `Yes, Upgrade My Order!` },
-          { title: 'No-Thanks', content: `No thanks, I'll stick with the basic version` }
-        ]
-      };
+      headline = `You're In! Want the Complete Mastery System Too?`;
+      bodyContent = `Promise: Get a done-for-you advanced system built around your specific needs. We do the heavy lifting, you just follow the plan — save time, avoid mistakes, and reach ${goal} faster.
+
+Included:
+• Personalized strategies based on your unique situation
+• Custom targets to track your progress
+• Advanced templates
+• Priority access to new features
+
+Bullets:
+• Save 10+ hours a week avoiding ${problem}
+• Reach ${goal} without the usual frustration
+• Strategies update automatically as things change
+• Works alongside ${productName} for full coverage
+• Cancel anytime — no commitment
+
+CTA: Yes! Add the Mastery System — $49/month
+
+No-Thanks: No thanks, I'll figure it out on my own.`;
+      break;
+
     case 'Downsell':
-      return {
-        headline: `Wait — Here's a Simpler Option`,
-        sections: [
-          { title: 'Simpler Offer', content: `If the VIP package was too much, how about just the templates?` },
-          { title: 'What\'s Different', content: `You get the core assets without the expensive coaching.` },
-          { title: 'Benefits', content: `• Instant template access\n• Easy to customize\n• Proven to convert\n• Huge time saver\n• Fraction of the cost` },
-          { title: 'CTA', content: `Yes, I Want This Instead` },
-          { title: 'No-Thanks', content: `No thanks, I'm good with what I have` }
-        ]
-      };
+      headline = `Not Ready for the Full System? Here's a Simpler Option.`;
+      bodyContent = `Promise: Get the Quick-Start Guide — a static list of the best solutions for ${problem}. No personalization, no weekly updates. Just a solid guide you can reference anytime.
+
+What Changed: The Mastery System gives you personalized, updating plans. The Quick-Start Guide is a one-time download. Less customization, but still way better than guessing.
+
+Bullets:
+• Best strategies specifically for ${audience}
+• Sorted by ease of use and impact
+• One-time purchase — no subscription
+• Printable PDF format
+• Great starting point if you're not ready for a full plan
+
+CTA: Yes, I'll Take the Quick-Start Guide — $19
+
+No-Thanks: No thanks, I'm good with just ${productName}.`;
+      break;
+
     case 'Thank You Page':
-      return {
-        headline: `You're In! Here's What Happens Next...`,
-        sections: [
-          { title: 'Confirmation', content: `Your order for ${productName} is confirmed.` },
-          { title: 'Next Steps', content: `1. Check your email for login details.\n2. Whitelist our email address.\n3. Log in and start module 1.` },
-          { title: 'Access Instructions', content: `You can log in at members.yoursite.com.` },
-          { title: 'Support Note', content: `Need help? Email support@yoursite.com.` },
-          { title: 'Bonus CTA', content: `Join our free Facebook group while you wait.` }
-        ]
-      };
+      headline = `You're In! Here's How to Get Started`;
+      bodyContent = `Confirmation: Your purchase is confirmed. You now have full access to ${productName}.
+
+Next Steps:
+1. Check your email for your login link
+2. Open the platform on your device
+3. Start using it to solve ${problem} right away
+
+Access: Your login link was sent to the email you used at checkout. Can't find it? Check spam, or email support@example.com.
+
+Support: Need help? Reply to your confirmation email or reach us at support@example.com. We typically respond within 4 hours.
+
+Bonus CTA: Know someone else in ${audience} who'd love this? Share your referral link and earn rewards for every signup.`;
+      break;
+
     case 'Email Follow-up':
-      return {
-        headline: `5-Email Welcome Sequence`,
-        sections: [
-          { title: 'Email 1 (Welcome)', content: `Subject: Welcome to ${productName}!\n\nHere's how to get started...` },
-          { title: 'Email 2 (Quick Win)', content: `Subject: Your first win with ${productName}\n\nDo this one thing today...` },
-          { title: 'Email 3 (Story)', content: `Subject: How I overcame ${problem}\n\nHere is my story...` },
-          { title: 'Email 4 (Objection Crusher)', content: `Subject: "But will this work for me?"\n\nYes, and here is why...` },
-          { title: 'Email 5 (Final Push)', content: `Subject: Last chance to upgrade\n\nDon't miss out on this...` }
-        ]
-      };
+      headline = `5-Email Welcome Sequence`;
+      bodyContent = `Email 1 — Welcome
+Subject: You're in — here's your access to ${productName}
+Body: Welcome message, login link, quick-start instructions, reminder of what you got.
+CTA: Log in now
+
+Email 2 — Quick Win (Day 2)
+Subject: Try this: your first win takes 2 minutes
+Body: Walk them through their first action step to solve ${problem}, show how easy it is.
+CTA: Get your first win
+
+Email 3 — Story (Day 4)
+Subject: How one user achieved ${goal} effortlessly
+Body: Short story about someone in ${audience} who used the tool, solved ${problem}, and got results.
+CTA: Start seeing results today
+
+Email 4 — Objection Crusher (Day 6)
+Subject: Think solving ${problem} is too hard? Think again.
+Body: Address the biggest objection, show how ${productName} makes it simple.
+CTA: See how easy it can be
+
+Email 5 — Final Push (Day 8)
+Subject: Your upgrade offer expires tomorrow
+Body: Remind them about the upsell, emphasize time savings, add urgency.
+CTA: Upgrade your access now`;
+      break;
+
     case 'Webinar':
-      return {
-        headline: `Free Training: How to solve ${problem} for ${audience}`,
-        sections: [
-          { title: 'Promise', content: `In this free training, you will learn the exact system we use to help ${audience} succeed.` },
-          { title: 'Benefits', content: `• The 3 secrets to success\n• How to avoid common pitfalls\n• Live Q&A session\n• Exclusive bonuses for attendees\n• Actionable strategy` },
-          { title: 'Host Intro', content: `Hosted by an industry expert who has helped thousands.` },
-          { title: 'CTA', content: `Reserve Your Spot` },
-          { title: 'Reminder Email', content: `Subject: We are starting in 15 minutes!\n\nClick here to join the room.` }
-        ]
-      };
+      headline = `Free Training: How ${audience} Can Solve ${problem} Without Wasting Time`;
+      bodyContent = `Promise: In 45 minutes, you'll learn exactly how to overcome ${problem} and achieve ${goal} — no stress, no huge budget, no willpower required.
+
+Bullets:
+• The top 3 strategies that actually work for ${audience}
+• How to automate the hardest parts of ${problem}
+• The "2-minute method" that eliminates decision fatigue
+• Why most advice fails (and what actually works)
+• Live Q&A — get your specific questions answered
+
+Host: Hosted by an expert who overcame ${problem} and now helps others do the same.
+
+CTA: Reserve Your Free Spot
+
+Reminder Email Subject: Your training on solving ${problem} is tomorrow
+Reminder Body: Quick reminder with time, link, and one major benefit to show up for.`;
+      break;
+
     case 'Survey':
-      return {
-        headline: `Quick Survey: Help Us Serve You Better`,
-        sections: [
-          { title: 'Intro', content: `We want to create the best content for ${audience}. Please take 2 minutes to answer.` },
-          { title: 'Questions', content: `1. What is your biggest challenge with ${problem}?\n2. What is your current goal?\n3. How much time do you have?\n4. What is your budget?\n5. What format do you prefer?\n6. What have you tried before?\n7. Any other comments?` },
-          { title: 'Completion Message', content: `Thank you for your feedback! We will use this to improve.` },
-          { title: 'CTA', content: `Return to homepage` }
-        ]
-      };
+      headline = `Quick Survey: Help Us Build Better Solutions for You`;
+      bodyContent = `Intro: We're building something to help ${audience} solve ${problem}. Your answers (2 minutes) will help us make it work perfectly for YOUR needs.
+
+Questions:
+1. How often do you deal with ${problem}?
+2. What's your biggest frustration right now?
+3. What solutions have you tried in the past?
+4. How much do you typically spend trying to solve this?
+5. Do you have any specific goals right now?
+6. Would you use a tool that specifically helps with this?
+7. What would make a solution worth paying for?
+
+Completion: Thanks! Your answers help us build exactly what ${audience} need. We'll email you when the tool is ready — you'll get first access.
+
+CTA: Submit & Get Early Access`;
+      break;
+
     case 'Application Page':
-      return {
-        headline: `Apply to ${productName}`,
-        sections: [
-          { title: 'Qualification', content: `This program is strictly for ${audience} who are serious about results.` },
-          { title: 'Questions', content: `1. Full Name\n2. Email\n3. Business/Website\n4. Current Revenue\n5. Goal Revenue\n6. Biggest Hurdle\n7. Why are you a good fit?\n8. Are you ready to invest?` },
-          { title: 'Submission CTA', content: `Submit Application` },
-          { title: 'Confirmation', content: `We will review your application and get back to you within 48 hours.` }
-        ]
-      };
+      headline = `Apply for the Advanced Accelerator Program`;
+      bodyContent = `Qualification: This program is for ${audience} who are serious about solving ${problem} once and for all. We work with a limited number of people each month to create personalized plans.
+
+Questions:
+1. What's your name?
+2. How long have you been dealing with ${problem}?
+3. What's your biggest challenge right now?
+4. Have you tried to improve this before? What happened?
+5. What would success look like for you in 90 days?
+6. Are you willing to invest time and money if the program is a good fit?
+7. What's the best email to reach you?
+
+CTA: Submit My Application
+
+Confirmation: Application received! We review applications within 48 hours. If you're a good fit, we'll send you a link to book your strategy call.`;
+      break;
+
     case 'Booking Page':
-      return {
-        headline: `Book Your Strategy Call`,
-        sections: [
-          { title: 'Call Promise', content: `On this free call, we will map out a custom plan to solve ${problem}.` },
-          { title: 'Who Should Book', content: `• ${audience} ready to scale\n• Action-takers\n• People with a budget\n• Those committed to success` },
-          { title: 'Who Should NOT Book', content: `• Tire-kickers\n• People looking for free advice\n• Uncommitted individuals` },
-          { title: 'Preparation', content: `Please complete the application before the call and be in a quiet room.` },
-          { title: 'CTA', content: `Book Your Call Now` }
-        ]
-      };
+      headline = `Book Your Free 15-Minute Strategy Call`;
+      bodyContent = `Promise: In 15 minutes, we'll map out a simple plan to help you overcome ${problem} and achieve ${goal} — based on YOUR specific situation. No sales pitch unless you ask.
+
+Who Should Book:
+• ${audience} who are ready for change
+• People who want to stop struggling with ${problem}
+• Those open to expert guidance
+• Anyone who has tried and failed to fix this on their own
+
+Who Should NOT Book:
+• People looking for a magic button with zero effort
+• Those not willing to try new approaches
+• Anyone not currently dealing with ${problem}
+
+Preparation: Before your call, think about your biggest hurdle and one specific goal you'd like to achieve in the next 30 days.
+
+CTA: Book My Free Strategy Call`;
+      break;
+
     default:
-      return {
-        headline: `[Your Headline Here]`,
-        sections: [
-          { title: 'Content', content: `[Your content goes here]` }
-        ]
-      };
+      headline = `Ready to overcome ${problem}?`;
+      bodyContent = `Discover how ${audience} are using ${productName} to achieve ${goal} and solve ${problem} quickly.`;
+      break;
   }
+
+  return {
+    headline,
+    sections: [
+      { title: 'Generated Funnel Copy', content: bodyContent }
+    ]
+  };
 }

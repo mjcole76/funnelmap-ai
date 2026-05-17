@@ -139,7 +139,7 @@ export default function CopyPanel({ node, onClose, onSave, generatedCopy, onRege
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Headline</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Primary Headline</label>
               <textarea
                 value={copyData.headline}
                 onChange={(e) => updateHeadline(e.target.value)}
@@ -154,7 +154,7 @@ export default function CopyPanel({ node, onClose, onSave, generatedCopy, onRege
                 <textarea
                   value={section.content}
                   onChange={(e) => updateSection(idx, e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-y min-h-[100px]"
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-y min-h-[400px]"
                 />
               </div>
             ))}

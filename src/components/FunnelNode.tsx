@@ -16,6 +16,7 @@ interface FunnelNodeData {
   onDelete?: () => void;
   onAddNext?: (type: string) => void;
   onGenerateCopy?: () => void;
+  onPreview?: () => void;
 }
 
 export default function FunnelNode({ data }: { data: FunnelNodeData }) {
@@ -165,7 +166,7 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
           </button>
 
           <button 
-             onClick={(e) => { e.stopPropagation(); data.onGenerateCopy?.(); }}
+             onClick={(e) => { e.stopPropagation(); data.onPreview?.(); }}
             className="flex-1 py-1 px-1 text-[10px] font-medium rounded bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 flex items-center justify-center transition-colors"
           >
             <Eye className="w-3 h-3 mr-1" />

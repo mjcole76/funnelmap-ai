@@ -9,6 +9,7 @@ import Canvas from '../components/Canvas';
 import AnalyticsPanel from '../components/AnalyticsPanel';
 import SettingsDrawer from '../components/SettingsDrawer';
 import PreviewModal from '../components/PreviewModal';
+import PagePreview from '../components/PagePreview';
 import CopyPanel from '../components/CopyPanel';
 import { FunnelContext, generateCopy } from '../lib/copyTemplates';
 
@@ -64,6 +65,7 @@ function FunnelMapInner() {
   const [copyPanelNode, setCopyPanelNode] = useState<Node | null>(null);
   const [generatedCopy, setGeneratedCopy] = useState<any>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const [isPublished, setIsPublished] = useState(false);
@@ -557,6 +559,7 @@ const newNodes: Node[] = [];
             setEdges={setEdges}
             onEditNode={setEditingNode}
             onGenerateCopy={handleGenerateCopy}
+            onPreviewNode={(nodeId: string) => setPreviewNodeId(nodeId)}
             setSaveStatus={setSaveStatus}
           />
         </div>
@@ -576,6 +579,21 @@ const newNodes: Node[] = [];
         edges={edges}
         onClose={() => setIsPreviewOpen(false)}
       />
+
+      {previewNodeId && (
+        <PagePreview
+          isOpen={!!previewNodeId}
+          onClose={() => setPreviewNodeId(null)}
+          nodeId={previewNodeId}
+          stepType={nodes.find(n => n.id === previewNodeId)?.data?.type as string || 'Landing Page'}
+          title={nodes.find(n => n.id === previewNodeId)?.data?.title as string || 'Page'}
+          previewTemplate={nodes.find(n => n.id === previewNodeId)?.data?.previewTemplate as string || ''}
+          headline={nodes.find(n => n.id === previewNodeId)?.data?.headline as string}
+          buttonText={nodes.find(n => n.id === previewNodeId)?.data?.buttonText as string}
+          price={nodes.find(n => n.id === previewNodeId)?.data?.price as string}
+          funnelSettings={funnelContext as any}
+        />
+      )}
 
       {copyPanelNode && (
         <CopyPanel 

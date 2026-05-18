@@ -15,10 +15,12 @@ import ExportModal from '../components/ExportModal';
 import TemplateLibrary, { FunnelTemplate } from '../components/TemplateLibrary';
 import TemplateBuilder from '../components/TemplateBuilder';
 import PageEditor from '../components/PageEditor';
+import FunnelManager from '../components/FunnelManager';
 
 import type { FunnelContext, SaveStatus } from '../types';
 import type { PlacedBlock } from '../lib/templateBlocks';
 import { useFunnelStorage } from '../hooks/useFunnelStorage';
+import { saveFunnel, getActiveFunnelId, setActiveFunnelId, SavedFunnel } from '../lib/funnelStorage';
 import { useCopyGeneration } from '../hooks/useCopyGeneration';
 import { useQualityReport } from '../hooks/useQualityReport';
 import { useFunnelGeneration } from '../hooks/useFunnelGeneration';
@@ -50,6 +52,8 @@ function FunnelMapInner() {
   const [showQualityReport, setShowQualityReport] = useState(false);
   // Export modal state managed by useExportManager hook
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [showFunnelManager, setShowFunnelManager] = useState(false);
+  const [activeFunnelId, setActiveFunnelIdState] = useState<string | null>(null);
 
   // ═══════ HOOKS ═══════
   const { isLoaded, saveCopyForNode, loadCopyForNode, saveLayoutForNode, loadLayoutForNode } = useFunnelStorage(
@@ -78,6 +82,34 @@ function FunnelMapInner() {
   } = usePageEditor(nodes, setNodes as any, setSaveStatus, saveCopyForNode, loadCopyForNode, regenerateForNode);
 
   const { showExportModal, openExportModal, closeExportModal } = useExportManager();
+
+  // Funnel management
+  const handleLoadFunnel = useCallback((funnel: SavedFunnel) => {
+    setNodes(funnel.nodes || []);
+    setEdges(funnel.edges || []);
+    if (funnel.offerBrief && funnel.offerBrief.productName) {
+      setFunnelContext(prev => ({
+        ...prev,
+        productName: funnel.offerBrief.productName || '',
+        audience: funnel.offerBrief.audience || '',
+        price: funnel.offerBrief.price || '',
+        problem: funnel.offerBrief.mainProblem || '',
+        goal: funnel.offerBrief.desiredOutcome || '',
+      }));
+    }
+    // Load layouts into nodes
+    if (funnel.layouts) {
+      setNodes(nds => nds.map(n => {
+        if (funnel.layouts[n.id]) {
+          return { ...n, data: { ...n.data, layout: funnel.layouts[n.id] } };
+        }
+        return n;
+      }));
+    }
+    setActiveFunnelIdState(funnel.id);
+    setActiveFunnelId(funnel.id);
+    setSaveStatus('saved');
+  }, [setNodes, setEdges, setFunnelContext, setSaveStatus]);
 
   // ═══════ EDGE/NODE CHANGE HANDLERS ═══════
   const onNodesChange = useCallback((changes: NodeChange[]) => { onNodesChangeCore(changes); setSaveStatus('unsaved'); }, [onNodesChangeCore]);
@@ -191,6 +223,8 @@ function FunnelMapInner() {
         isGeneratingFullCopy={isGeneratingFullCopy}
         onOpenQualityReport={() => setShowQualityReport(true)}
         onOpenTemplateLibrary={() => setShowTemplateLibrary(true)}
+        onOpenFunnelManager={() => setShowFunnelManager(true)}
+        activeFunnelName={activeFunnelId ? funnelContext.funnelName : undefined}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -250,6 +284,10 @@ function FunnelMapInner() {
         nodeId={templateBuilderNode?.id || ''} nodeTitle={(templateBuilderNode?.data?.title as string) || 'Untitled'}
         stepType={(templateBuilderNode?.data?.type as string) || 'Sales Page'} currentLayout={(templateBuilderNode?.data?.layout as PlacedBlock[]) || null}
         onSaveLayout={saveLayout} onGenerateCopy={handleGenerateCopyFromLayout} />
+
+      <FunnelManager isOpen={showFunnelManager} onClose={() => setShowFunnelManager(false)}
+        activeFunnelId={activeFunnelId} onLoadFunnel={handleLoadFunnel}
+        onNewFunnel={() => { setNodes([]); setEdges([]); setSaveStatus('unsaved'); setShowFunnelManager(false); }} />
 
       <PageEditor isOpen={showPageEditor} onClose={closePageEditor}
         nodeId={pageEditorNode?.id || ''} nodeTitle={(pageEditorNode?.data?.title as string) || 'Untitled'}

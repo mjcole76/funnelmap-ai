@@ -8,6 +8,8 @@ import {
   saveTemplate, loadTemplates, deleteTemplate, duplicateTemplate, exportTemplate, importTemplate, sectionToCSS, typographyToCSS, buttonToCSS, blockToHTML,
 } from '../lib/templateBlocks';
 import { BUILT_IN_TEMPLATES, BuiltInTemplate, getBuiltInTemplatesByPageType } from '../lib/builtInTemplates';
+import TemplateQAPanel from './TemplateQAPanel';
+import type { TemplateQualityIssue } from '../types/qa';
 
 interface TemplateBuilderProps {
   isOpen: boolean;
@@ -20,7 +22,7 @@ interface TemplateBuilderProps {
   onGenerateCopy: (nodeId: string, layout: PlacedBlock[]) => void;
 }
 
-type Tab = 'blocks' | 'styles' | 'templates';
+type Tab = 'blocks' | 'styles' | 'templates' | 'qa';
 type StartMode = 'choose' | 'building';
 
 const CATEGORIES = [
@@ -562,7 +564,7 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
           <div className="w-72 border-r overflow-y-auto bg-gray-50 flex-shrink-0">
             {/* Tab bar */}
             <div className="flex border-b sticky top-0 bg-gray-50 z-10">
-              {[{ key: 'blocks' as Tab, label: 'Blocks', icon: <Layout className="w-3 h-3" /> }, { key: 'styles' as Tab, label: 'Styles', icon: <Palette className="w-3 h-3" /> }, { key: 'templates' as Tab, label: 'Templates', icon: <FolderOpen className="w-3 h-3" /> }].map(tab => (
+              {[{ key: 'blocks' as Tab, label: 'Blocks', icon: <Layout className="w-3 h-3" /> }, { key: 'styles' as Tab, label: 'Styles', icon: <Palette className="w-3 h-3" /> }, { key: 'templates' as Tab, label: 'Templates', icon: <FolderOpen className="w-3 h-3" /> }, { key: 'qa' as Tab, label: 'QA', icon: <span className="text-xs">🔍</span> }].map(tab => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                   className={`flex-1 py-2 text-[10px] font-semibold flex items-center justify-center gap-1 ${activeTab === tab.key ? 'text-indigo-700 border-b-2 border-indigo-600 bg-white' : 'text-gray-500 hover:text-gray-700'}`}
                 >{tab.icon}{tab.label}</button>
@@ -647,6 +649,7 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
                   <button onClick={() => { setSaveName(''); setSaveDesc(''); setSaveModalOpen(true); }} className="flex-1 text-[10px] px-2 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg font-medium flex items-center justify-center"><Save className="w-3 h-3 mr-1" />Save As Template</button>
                   <button onClick={() => { setImportJson(''); setImportModalOpen(true); }} className="flex-1 text-[10px] px-2 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center"><Upload className="w-3 h-3 mr-1" />Import</button>
                 </div>
+                <button onClick={() => setStartMode('choose')} className="w-full text-[10px] py-1.5 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-gray-700 hover:border-gray-400">🎨 Browse Built-In Templates</button>
                 {templates.length === 0 && <p className="text-xs text-gray-400 text-center py-4">No saved templates yet.</p>}
                 {templates.map(tpl => (
                   <div key={tpl.id} className="border rounded-lg p-2 bg-white">
@@ -665,6 +668,22 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
                   </div>
                 ))}
               </div>
+            )}
+            {activeTab === 'qa' && (
+              <TemplateQAPanel
+                blocks={blocks}
+                stepType={stepType}
+                onClose={() => setActiveTab('blocks')}
+                onSelectBlock={(instanceId) => { setSelectedBlock(instanceId); setActiveTab('styles'); }}
+                onFixIssue={(issue, currentBlocks) => {
+                  // Auto-fix: add missing blocks
+                  if (issue.autoFixable && !issue.blockInstanceId) {
+                    const newBlock = createPlacedBlock(issue.blockType as any);
+                    setBlocks([...currentBlocks, newBlock]);
+                  }
+                  return currentBlocks;
+                }}
+              />
             )}
           </div>
 

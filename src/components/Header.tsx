@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings, LayoutGrid, RefreshCcw, ClipboardCheck, Library } from 'lucide-react';
+import { LayoutTemplate, CheckCircle2, Cloud, CloudOff, Play, Globe, Trash, Wand2, X, Download, Settings, LayoutGrid, RefreshCcw, ClipboardCheck, Library, FolderOpen } from 'lucide-react';
 import { FunnelContext } from '../lib/copyTemplates';
 
 interface HeaderProps {
@@ -21,6 +21,8 @@ interface HeaderProps {
   isGeneratingFullCopy?: boolean;
   onOpenQualityReport?: () => void;
   onOpenTemplateLibrary?: () => void;
+  onOpenFunnelManager?: () => void;
+  activeFunnelName?: string;
 }
 
 export default function Header({ 
@@ -41,7 +43,9 @@ export default function Header({
   onWriteFullFunnel,
   isGeneratingFullCopy,
   onOpenQualityReport,
-  onOpenTemplateLibrary
+  onOpenTemplateLibrary,
+  onOpenFunnelManager,
+  activeFunnelName
 }: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showSettingsModalLocal, setShowSettingsModalLocal] = useState(false);
@@ -204,6 +208,17 @@ export default function Header({
               >
                 <Library className="w-4 h-4 mr-1.5" />
                 Templates
+              </button>
+            )}
+
+            {onOpenFunnelManager && (
+              <button 
+                onClick={onOpenFunnelManager}
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-md hover:bg-violet-100 transition-colors"
+                title="My Funnels"
+              >
+                <FolderOpen className="w-4 h-4 mr-1.5" />
+                {activeFunnelName ? activeFunnelName : 'My Funnels'}
               </button>
             )}
 

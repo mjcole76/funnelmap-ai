@@ -18,8 +18,8 @@ Object.defineProperty(globalThis, 'localStorage', { value: mockLocalStorage });
 beforeEach(() => { mockLocalStorage.clear(); });
 
 describe('TEMPLATE_BLOCKS', () => {
-  it('has 28 block definitions', () => {
-    expect(TEMPLATE_BLOCKS.length).toBe(28);
+  it('has 41 block definitions', () => {
+    expect(TEMPLATE_BLOCKS.length).toBe(41);
   });
 
   it('has unique IDs', () => {

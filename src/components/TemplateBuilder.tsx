@@ -7,6 +7,7 @@ import {
   DEFAULT_SECTION_STYLE, DEFAULT_TYPOGRAPHY, DEFAULT_BUTTON_STYLE, DEFAULT_IMAGE_STYLE, DEFAULT_VIDEO_STYLE, DEFAULT_COLUMN_STYLE,
   saveTemplate, loadTemplates, deleteTemplate, duplicateTemplate, exportTemplate, importTemplate, sectionToCSS, typographyToCSS, buttonToCSS, blockToHTML,
 } from '../lib/templateBlocks';
+import { BUILT_IN_TEMPLATES, BuiltInTemplate, getBuiltInTemplatesByPageType } from '../lib/builtInTemplates';
 
 interface TemplateBuilderProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface TemplateBuilderProps {
 }
 
 type Tab = 'blocks' | 'styles' | 'templates';
+type StartMode = 'choose' | 'building';
 
 const CATEGORIES = [
   { key: 'core', label: 'Core', icon: '🎯' },
@@ -43,25 +45,203 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
   const [saveIncludeCopy, setSaveIncludeCopy] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importJson, setImportJson] = useState('');
+  const [startMode, setStartMode] = useState<StartMode>('choose');
+  const [previewBuiltIn, setPreviewBuiltIn] = useState<BuiltInTemplate | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       if (currentLayout && currentLayout.length > 0) {
-        // Migrate old blocks that don't have styles
         const migrated = currentLayout.map(b => ({
           ...b,
           styles: b.styles || { section: { ...DEFAULT_SECTION_STYLE }, typography: { ...DEFAULT_TYPOGRAPHY } },
         }));
         setBlocks(migrated);
+        setStartMode('building'); // Already has a layout, go straight to editor
       } else {
-        setBlocks(layoutFromStepType(stepType));
+        setBlocks([]);
+        setStartMode('choose'); // No layout, show start screen
       }
       setTemplates(loadTemplates());
       setSelectedBlock(null);
+      setPreviewBuiltIn(null);
     }
   }, [isOpen, currentLayout, stepType]);
 
   if (!isOpen) return null;
+
+  // Template library handlers (must be before any returns)
+  const _handleDuplicateTemplate = (id: string) => { duplicateTemplate(id); setTemplates(loadTemplates()); };
+  const _handleDeleteTemplate = (id: string) => { deleteTemplate(id); setTemplates(loadTemplates()); };
+  const _handleExportTemplate = (id: string) => {
+    const json = exportTemplate(id);
+    if (!json) return;
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `template-${id}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const _handleImportTemplate = () => {
+    const result = importTemplate(importJson);
+    if (result) { setTemplates(loadTemplates()); setImportModalOpen(false); setImportJson(''); }
+  };
+
+  // ═══ START SCREEN ═══
+  if (startMode === 'choose') {
+    const relevantBuiltIns = getBuiltInTemplatesByPageType(stepType);
+    const allBuiltIns = BUILT_IN_TEMPLATES;
+    const myTemplates = templates;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">🏗️ Choose a Starting Point</h2>
+              <p className="text-sm text-gray-500 mt-0.5">{nodeTitle} • {stepType}</p>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Three options */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <button onClick={() => { setBlocks([]); setStartMode('building'); }} className="p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all text-center group">
+                <div className="text-3xl mb-3">➕</div>
+                <h3 className="font-bold text-gray-900">Start Blank</h3>
+                <p className="text-xs text-gray-500 mt-1">Build from scratch</p>
+              </button>
+              <button onClick={() => document.getElementById('builtin-section')?.scrollIntoView({ behavior: 'smooth' })} className="p-6 border-2 border-indigo-200 rounded-xl bg-indigo-50 hover:border-indigo-400 transition-all text-center">
+                <div className="text-3xl mb-3">🎨</div>
+                <h3 className="font-bold text-gray-900">Use Built-In Template</h3>
+                <p className="text-xs text-gray-500 mt-1">{allBuiltIns.length} polished templates</p>
+              </button>
+              <button onClick={() => document.getElementById('my-templates-section')?.scrollIntoView({ behavior: 'smooth' })} className="p-6 border-2 border-gray-200 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all text-center">
+                <div className="text-3xl mb-3">📁</div>
+                <h3 className="font-bold text-gray-900">My Templates</h3>
+                <p className="text-xs text-gray-500 mt-1">{myTemplates.length} saved</p>
+              </button>
+            </div>
+
+            {/* Recommended for this page type */}
+            {relevantBuiltIns.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-bold text-gray-700 mb-3">⭐ Recommended for {stepType}</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {relevantBuiltIns.map(tpl => (
+                    <div key={tpl.id} className="border rounded-xl p-4 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer bg-white" onClick={() => setPreviewBuiltIn(tpl)}>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-900">{tpl.name}</h4>
+                          <p className="text-xs text-indigo-600 font-medium mt-0.5">Best for: {tpl.bestFor}</p>
+                          <p className="text-xs text-gray-500 mt-1">{tpl.description}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">{tpl.blocks.length} blocks</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={(e) => { e.stopPropagation(); setBlocks(JSON.parse(JSON.stringify(tpl.blocks))); setStartMode('building'); }} className="flex-1 text-xs py-1.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">Use Template</button>
+                        <button onClick={(e) => { e.stopPropagation(); setPreviewBuiltIn(tpl); }} className="text-xs py-1.5 px-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Preview</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* All built-in templates */}
+            <div id="builtin-section" className="mb-8">
+              <h3 className="text-sm font-bold text-gray-700 mb-3">🎨 All Built-In Templates</h3>
+              {['sales', 'landing', 'checkout', 'upsell', 'thankyou', 'email'].map(cat => {
+                const catTemplates = allBuiltIns.filter(t => t.category === cat);
+                if (!catTemplates.length) return null;
+                const catLabel = { sales: 'Sales Pages', landing: 'Landing Pages', checkout: 'Checkout', upsell: 'Upsell / Downsell', thankyou: 'Thank You', email: 'Email Sequences' }[cat];
+                return (
+                  <div key={cat} className="mb-4">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{catLabel}</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {catTemplates.map(tpl => (
+                        <div key={tpl.id} className="border rounded-xl p-3 hover:border-indigo-300 transition-all cursor-pointer bg-white" onClick={() => setPreviewBuiltIn(tpl)}>
+                          <h4 className="font-semibold text-sm text-gray-900">{tpl.name}</h4>
+                          <p className="text-xs text-gray-500 mt-0.5">{tpl.bestFor}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{tpl.blocks.length} blocks</p>
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={(e) => { e.stopPropagation(); setBlocks(JSON.parse(JSON.stringify(tpl.blocks))); setStartMode('building'); }} className="flex-1 text-[10px] py-1 bg-indigo-600 text-white rounded font-medium">Use</button>
+                            <button onClick={(e) => { e.stopPropagation(); const dup = JSON.parse(JSON.stringify(tpl.blocks)); const newTpl: SavedTemplate = { id: `tpl-${Date.now()}`, name: `${tpl.name} (Custom)`, description: tpl.description, pageType: tpl.pageType, pageStyle: '', blocks: dup, includeCopy: false, createdAt: Date.now(), updatedAt: Date.now() }; saveTemplate(newTpl); setTemplates(loadTemplates()); }} className="text-[10px] py-1 px-2 bg-gray-100 text-gray-600 rounded font-medium">Duplicate to My Templates</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* My Templates */}
+            <div id="my-templates-section" className="mb-8">
+              <h3 className="text-sm font-bold text-gray-700 mb-3">📁 My Templates</h3>
+              {myTemplates.length === 0 && <p className="text-xs text-gray-400 py-4 text-center">No saved templates yet. Duplicate a built-in or build one from scratch.</p>}
+              <div className="grid grid-cols-2 gap-3">
+                {myTemplates.map(tpl => (
+                  <div key={tpl.id} className="border rounded-xl p-3 bg-white">
+                    <h4 className="font-semibold text-sm text-gray-900">{tpl.name}</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">{tpl.pageType} • {tpl.blocks.length} blocks</p>
+                    <div className="flex gap-1 mt-2">
+                      <button onClick={() => { setBlocks(JSON.parse(JSON.stringify(tpl.blocks))); setStartMode('building'); }} className="flex-1 text-[10px] py-1 bg-indigo-600 text-white rounded font-medium">Use</button>
+                      <button onClick={() => _handleDuplicateTemplate(tpl.id)} className="text-[10px] py-1 px-2 bg-gray-100 text-gray-600 rounded">Dup</button>
+                      <button onClick={() => _handleExportTemplate(tpl.id)} className="text-[10px] py-1 px-2 bg-gray-100 text-gray-600 rounded"><Download className="w-3 h-3" /></button>
+                      <button onClick={() => _handleDeleteTemplate(tpl.id)} className="text-[10px] py-1 px-2 bg-red-50 text-red-600 rounded"><Trash2 className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button onClick={() => { setImportJson(''); setImportModalOpen(true); }} className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center"><Upload className="w-3 h-3 mr-1" />Import Template</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Built-in preview modal */}
+          {previewBuiltIn && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setPreviewBuiltIn(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-5 py-3 border-b">
+                  <div>
+                    <h3 className="font-bold text-sm">{previewBuiltIn.name}</h3>
+                    <p className="text-xs text-gray-500">{previewBuiltIn.bestFor}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => { setBlocks(JSON.parse(JSON.stringify(previewBuiltIn.blocks))); setStartMode('building'); setPreviewBuiltIn(null); }} className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-medium">Use This Template</button>
+                    <button onClick={() => setPreviewBuiltIn(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto bg-gray-100 p-4">
+                  <div className="bg-white rounded-xl shadow-sm border max-w-2xl mx-auto overflow-hidden">
+                    {previewBuiltIn.blocks.map((block, i) => (
+                      <div key={i} dangerouslySetInnerHTML={{ __html: blockToHTML(block) }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Import modal */}
+          {importModalOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-xl shadow-xl p-5 w-96">
+                <h3 className="font-bold text-sm mb-3">Import Template</h3>
+                <textarea value={importJson} onChange={e => setImportJson(e.target.value)} placeholder="Paste template JSON here..." rows={6} className="w-full border rounded-lg px-3 py-2 text-xs font-mono mb-3" />
+                <div className="flex justify-end space-x-2">
+                  <button onClick={() => setImportModalOpen(false)} className="px-3 py-1.5 text-sm bg-gray-100 rounded-lg">Cancel</button>
+                  <button onClick={_handleImportTemplate} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg font-medium">Import</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const selectedBlockData = blocks.find(b => b.instanceId === selectedBlock);
 
@@ -145,20 +325,6 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
     setSelectedBlock(null);
   };
 
-  const handleDuplicateTemplate = (id: string) => { duplicateTemplate(id); setTemplates(loadTemplates()); };
-  const handleDeleteTemplate = (id: string) => { deleteTemplate(id); setTemplates(loadTemplates()); };
-  const handleExportTemplate = (id: string) => {
-    const json = exportTemplate(id);
-    if (!json) return;
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `template-${id}.json`; a.click();
-    URL.revokeObjectURL(url);
-  };
-  const handleImportTemplate = () => {
-    const result = importTemplate(importJson);
-    if (result) { setTemplates(loadTemplates()); setImportModalOpen(false); setImportJson(''); }
-  };
 
   // Render style panel for selected block
   const renderStylePanel = () => {
@@ -492,9 +658,9 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
                     </div>
                     <div className="flex items-center space-x-1 mt-2">
                       <button onClick={() => handleApplyTemplate(tpl)} className="flex-1 text-[9px] px-1.5 py-1 bg-indigo-50 text-indigo-700 rounded font-medium">Use</button>
-                      <button onClick={() => handleDuplicateTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-gray-50 text-gray-600 rounded font-medium">Dup</button>
-                      <button onClick={() => handleExportTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-gray-50 text-gray-600 rounded font-medium"><Download className="w-3 h-3" /></button>
-                      <button onClick={() => handleDeleteTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-red-50 text-red-600 rounded font-medium"><Trash2 className="w-3 h-3" /></button>
+                      <button onClick={() => _handleDuplicateTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-gray-50 text-gray-600 rounded font-medium">Dup</button>
+                      <button onClick={() => _handleExportTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-gray-50 text-gray-600 rounded font-medium"><Download className="w-3 h-3" /></button>
+                      <button onClick={() => _handleDeleteTemplate(tpl.id)} className="text-[9px] px-1.5 py-1 bg-red-50 text-red-600 rounded font-medium"><Trash2 className="w-3 h-3" /></button>
                     </div>
                   </div>
                 ))}
@@ -540,7 +706,7 @@ export default function TemplateBuilder({ isOpen, onClose, nodeId, nodeTitle, st
               <textarea value={importJson} onChange={e => setImportJson(e.target.value)} placeholder="Paste template JSON here..." rows={6} className="w-full border rounded-lg px-3 py-2 text-xs font-mono mb-3" />
               <div className="flex justify-end space-x-2">
                 <button onClick={() => setImportModalOpen(false)} className="px-3 py-1.5 text-sm bg-gray-100 rounded-lg">Cancel</button>
-                <button onClick={handleImportTemplate} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg font-medium">Import</button>
+                <button onClick={_handleImportTemplate} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg font-medium">Import</button>
               </div>
             </div>
           </div>

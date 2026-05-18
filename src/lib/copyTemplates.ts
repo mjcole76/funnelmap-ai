@@ -879,8 +879,62 @@ export function generateCopyFromLayout(stepType: string, context: FunnelContext,
         });
         break;
       }
+      case 'urgency_bar': {
+        const reason = whyNow || 'this offer is only available for a limited time';
+        sections.push({ title: 'Urgency', content: `⏰ ${reason}. Don't miss out — this price won't last.` });
+        break;
+      }
+      case 'how_it_works': {
+        sections.push({ title: 'How It Works', content: `Here's how ${productName} works:\n\n1️⃣ Sign up and get instant access\n2️⃣ Follow the step-by-step process built for ${audience}\n3️⃣ See real results within your first week` });
+        break;
+      }
+      case 'what_you_get': {
+        const included = whatsIncluded || `Complete ${productName} system, Quick-start templates, Implementation checklist, Lifetime access`;
+        const items = included.split(',').map(i => i.trim()).filter(Boolean);
+        sections.push({ title: 'Everything You Get', content: `Here's everything included:\n\n${items.map(i => `✅ ${i}`).join('\n')}\n\nTotal value: Far more than ${price}.` });
+        break;
+      }
+      case 'offer_box': {
+        sections.push({ title: 'Special Offer', content: `Get ${productName} today for just ${price}.\n\n✅ Full system access\n✅ All bonuses included\n✅ Lifetime updates\n\nCTA: Get Instant Access\n\n30-day money-back guarantee.` });
+        break;
+      }
+      case 'order_summary': {
+        sections.push({ title: 'Order Summary', content: `${productName} — ${price}\nBonus Pack — FREE\n\nTotal: ${price}` });
+        break;
+      }
+      case 'checkout_form': {
+        sections.push({ title: 'Complete Your Order', content: `Secure your copy of ${productName} now.\n\nYour information is encrypted and secure.\n\nCTA: Complete Purchase — ${price}\n\n🔒 256-bit SSL encryption` });
+        break;
+      }
+      case 'opt_in_form': {
+        sections.push({ title: 'Get Your Free Guide', content: `Enter your email and we'll send you the free ${short} guide immediately.\n\nNo spam. Unsubscribe anytime.\n\nCTA: Send Me the Guide` });
+        break;
+      }
+      case 'trust_note': {
+        sections.push({ title: 'Trust', content: `🔒 Secure checkout · 30-day money-back guarantee · Trusted by ${audience}` });
+        break;
+      }
+      case 'no_thanks_link': {
+        sections.push({ title: 'Decline', content: `No thanks, I don't need this right now. \u2192 Skip This Offer` });
+        break;
+      }
+      case 'next_steps': {
+        sections.push({ title: 'What Happens Next', content: `You're in! Here's what to do now:\n\n📧 Step 1: Check your email for login details\n🚀 Step 2: Log in and start the quick-start guide\n🎯 Step 3: Get your first win within 24 hours` });
+        break;
+      }
+      case 'access_button': {
+        sections.push({ title: 'Access', content: `CTA: Access Your ${short} Now →\n\nYou'll also receive an email with this link.` });
+        break;
+      }
+      case 'email_cards': {
+        sections.push({ title: 'Your Email Sequence', content: `Email 1 — Welcome: Introduce yourself and deliver the lead magnet\nEmail 2 — Quick Win: Give them an actionable tip\nEmail 3 — Story: Share a relevant story that builds trust\nEmail 4 — Social Proof: Show results from other ${audience}\nEmail 5 — The Offer: Present ${productName} with a clear CTA` });
+        break;
+      }
+      case 'timeline': {
+        sections.push({ title: 'Your Journey', content: `Day 1 — Get started with the quick-start guide\nDay 3 — Complete your first implementation\nDay 7 — See your first measurable results\nDay 14 — Refine and optimize your approach\nDay 30 — Full system running on autopilot` });
+        break;
+      }
       default: {
-        // Fallback for any unknown block
         sections.push({
           title: block.content?.headline || 'Section',
           content: block.content?.body || `Content for ${block.blockType}`

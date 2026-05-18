@@ -144,6 +144,9 @@ export function getDefaultStyles(blockType: BlockType): BlockStyles {
   if (['standalone_button', 'button_group'].includes(blockType)) {
     base.button = { ...DEFAULT_BUTTON_STYLE };
   }
+  if (['offer_box', 'checkout_form', 'opt_in_form', 'access_button', 'no_thanks_link'].includes(blockType)) {
+    base.button = { ...DEFAULT_BUTTON_STYLE };
+  }
   
   // Style presets per block
   if (blockType === 'dark_section') {
@@ -165,6 +168,48 @@ export function getDefaultStyles(blockType: BlockType): BlockStyles {
     base.section.alignment = 'center';
     base.section.paddingTop = 64;
     base.section.paddingBottom = 64;
+  }
+  if (blockType === 'urgency_bar') {
+    base.section.backgroundColor = '#dc2626';
+    base.section.textColor = '#ffffff';
+    base.section.paddingTop = 12;
+    base.section.paddingBottom = 12;
+    base.section.alignment = 'center';
+    base.section.maxWidth = 'full';
+    base.typography.headlineSize = 'small';
+  }
+  if (blockType === 'offer_box') {
+    base.section.backgroundColor = '#fefce8';
+    base.section.borderColor = '#eab308';
+    base.section.borderRadius = 16;
+    base.section.shadow = true;
+    base.section.alignment = 'center';
+  }
+  if (blockType === 'order_summary') {
+    base.section.backgroundColor = '#f9fafb';
+    base.section.borderColor = '#e5e7eb';
+    base.section.borderRadius = 12;
+  }
+  if (blockType === 'checkout_form') {
+    base.section.borderColor = '#e5e7eb';
+    base.section.borderRadius = 12;
+    base.section.shadow = true;
+  }
+  if (blockType === 'opt_in_form') {
+    base.section.backgroundColor = '#eff6ff';
+    base.section.borderRadius = 12;
+    base.section.alignment = 'center';
+  }
+  if (blockType === 'trust_note') {
+    base.section.paddingTop = 16;
+    base.section.paddingBottom = 16;
+    base.section.alignment = 'center';
+    base.typography.bodySize = 'small';
+  }
+  if (blockType === 'no_thanks_link') {
+    base.section.paddingTop = 8;
+    base.section.paddingBottom = 8;
+    base.section.alignment = 'center';
   }
   
   return base;
@@ -243,7 +288,21 @@ export type BlockType =
   | 'callout_box'
   // Button blocks
   | 'standalone_button'
-  | 'button_group';
+  | 'button_group'
+  // Funnel-specific blocks
+  | 'urgency_bar'
+  | 'how_it_works'
+  | 'what_you_get'
+  | 'offer_box'
+  | 'order_summary'
+  | 'checkout_form'
+  | 'opt_in_form'
+  | 'trust_note'
+  | 'no_thanks_link'
+  | 'next_steps'
+  | 'access_button'
+  | 'email_cards'
+  | 'timeline';
 
 export interface PageLayout {
   id: string;
@@ -616,6 +675,157 @@ export const TEMPLATE_BLOCKS: TemplateBlock[] = [
       ],
     },
   },
+  // ── FUNNEL-SPECIFIC ──
+  {
+    id: 'urgency_bar', type: 'urgency_bar', label: 'Urgency Bar',
+    description: 'Top-of-page countdown or limited-time notice',
+    category: 'conversion', icon: '🔴', copyKey: 'urgencyBar',
+    defaultContent: {
+      headline: '⏰ Limited Time: This offer expires in 24 hours',
+    },
+  },
+  {
+    id: 'how_it_works', type: 'how_it_works', label: 'How It Works',
+    description: 'Step-by-step process — 3 to 5 numbered steps',
+    category: 'core', icon: '🔢', copyKey: 'howItWorks',
+    defaultContent: {
+      headline: 'How It Works',
+      cards: [
+        { title: 'Step 1', body: 'Sign up and get instant access', icon: '1️⃣' },
+        { title: 'Step 2', body: 'Follow the guided process', icon: '2️⃣' },
+        { title: 'Step 3', body: 'See results within your first week', icon: '3️⃣' },
+      ],
+    },
+  },
+  {
+    id: 'what_you_get', type: 'what_you_get', label: 'What You Get',
+    description: 'Detailed breakdown of everything included',
+    category: 'sales', icon: '📋', copyKey: 'whatYouGetDetailed',
+    defaultContent: {
+      headline: 'Here\'s Everything You Get',
+      items: [
+        { title: 'The Core System', description: 'Complete step-by-step framework (Value: $197)' },
+        { title: 'Quick-Start Templates', description: 'Ready-to-use templates so you can start today (Value: $97)' },
+        { title: 'Bonus: Cheat Sheet', description: 'One-page reference guide (Value: $47)' },
+      ],
+    },
+  },
+  {
+    id: 'offer_box', type: 'offer_box', label: 'Offer Box',
+    description: 'Highlighted offer summary with price and CTA',
+    category: 'conversion', icon: '🎁', copyKey: 'offerBox',
+    defaultContent: {
+      headline: 'Special Offer',
+      body: 'Get everything above for one simple price.',
+      bullets: ['Full system access', 'All bonuses included', 'Lifetime updates'],
+      cta: 'Get Instant Access',
+      ctaSubtext: '30-day money-back guarantee',
+    },
+  },
+  {
+    id: 'order_summary', type: 'order_summary', label: 'Order Summary',
+    description: 'Cart summary showing what the buyer is getting',
+    category: 'conversion', icon: '🧾', copyKey: 'orderSummary',
+    defaultContent: {
+      headline: 'Order Summary',
+      items: [
+        { title: 'Main Product', description: '$47.00' },
+        { title: 'Bonus Pack', description: 'FREE' },
+      ],
+      body: 'Total: $47.00',
+    },
+  },
+  {
+    id: 'checkout_form', type: 'checkout_form', label: 'Checkout Form',
+    description: 'Payment form placeholder with trust badges',
+    category: 'conversion', icon: '💳', copyKey: 'checkoutForm',
+    defaultContent: {
+      headline: 'Complete Your Order',
+      body: 'Enter your payment details below. Your information is encrypted and secure.',
+      cta: 'Complete Purchase',
+      ctaSubtext: '🔒 256-bit SSL encryption',
+    },
+  },
+  {
+    id: 'opt_in_form', type: 'opt_in_form', label: 'Opt-In Form',
+    description: 'Email capture form with headline and CTA',
+    category: 'conversion', icon: '📧', copyKey: 'optInForm',
+    defaultContent: {
+      headline: 'Get Your Free Guide',
+      body: 'Enter your email below and we\'ll send it right over.',
+      cta: 'Send Me the Guide',
+      ctaSubtext: 'No spam. Unsubscribe anytime.',
+    },
+  },
+  {
+    id: 'trust_note', type: 'trust_note', label: 'Trust Note',
+    description: 'Small trust-building line — secure checkout, privacy, etc.',
+    category: 'trust', icon: '🔒', copyKey: 'trustNote',
+    defaultContent: {
+      body: '🔒 Secure checkout · 30-day money-back guarantee · Trusted by 1,000+ customers',
+    },
+  },
+  {
+    id: 'no_thanks_link', type: 'no_thanks_link', label: 'No Thanks Link',
+    description: 'Decline link for upsell/downsell pages',
+    category: 'conversion', icon: '👋', copyKey: 'noThanksLink',
+    defaultContent: {
+      body: 'No thanks, I don\'t want this upgrade.',
+      cta: 'Skip This Offer →',
+    },
+  },
+  {
+    id: 'next_steps', type: 'next_steps', label: 'Next Steps',
+    description: 'Post-purchase instructions — what to do now',
+    category: 'core', icon: '📍', copyKey: 'nextSteps',
+    defaultContent: {
+      headline: 'Here\'s What Happens Next',
+      cards: [
+        { title: 'Step 1', body: 'Check your email for login details', icon: '📧' },
+        { title: 'Step 2', body: 'Log in and start the quick-start guide', icon: '🚀' },
+        { title: 'Step 3', body: 'Get your first win within 24 hours', icon: '🎯' },
+      ],
+    },
+  },
+  {
+    id: 'access_button', type: 'access_button', label: 'Access Button',
+    description: 'Big button to access the purchased product',
+    category: 'button', icon: '🔑', copyKey: 'accessButton',
+    defaultContent: {
+      cta: 'Access Your Purchase →',
+      ctaSubtext: 'You\'ll also receive an email with this link.',
+    },
+  },
+  {
+    id: 'email_cards', type: 'email_cards', label: 'Email Cards',
+    description: 'Visual email sequence — show each email in the series',
+    category: 'layout', icon: '📬', copyKey: 'emailCards',
+    defaultContent: {
+      headline: 'Your Email Sequence',
+      cards: [
+        { title: 'Email 1: Welcome', body: 'Introduce yourself and deliver the lead magnet', icon: '👋' },
+        { title: 'Email 2: Quick Win', body: 'Give them an actionable tip they can use today', icon: '⚡' },
+        { title: 'Email 3: Story', body: 'Share a relevant story that builds trust', icon: '📖' },
+        { title: 'Email 4: Social Proof', body: 'Show results from other customers', icon: '⭐' },
+        { title: 'Email 5: The Offer', body: 'Present your product with a clear CTA', icon: '🎯' },
+      ],
+    },
+  },
+  {
+    id: 'timeline', type: 'timeline', label: 'Timeline',
+    description: 'Visual timeline — great for sequences, roadmaps, or processes',
+    category: 'layout', icon: '📅', copyKey: 'timeline',
+    defaultContent: {
+      headline: 'Your Journey',
+      items: [
+        { title: 'Day 1', description: 'Get started with the quick-start guide' },
+        { title: 'Day 3', description: 'Complete your first implementation' },
+        { title: 'Day 7', description: 'See your first measurable results' },
+        { title: 'Day 14', description: 'Refine and optimize your approach' },
+        { title: 'Day 30', description: 'Full system running on autopilot' },
+      ],
+    },
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -829,6 +1039,99 @@ export function blockToHTML(block: PlacedBlock): string {
         const color = variant === 'primary' ? btn.textColor : variant === 'outline' ? btn.backgroundColor : '#1a1a1a';
         const border = variant === 'outline' ? `border: 2px solid ${btn.backgroundColor}` : 'border: none';
         inner += `<a href="${b.url || '#'}" style="${buttonToCSS({ ...btn, backgroundColor: bg, textColor: color })}; ${border}">${b.text}</a>`;
+      });
+      inner += '</div>';
+      break;
+    }
+    case 'urgency_bar':
+      inner = `<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.05em">${c.headline || ''}</div>`;
+      break;
+    case 'how_it_works':
+    case 'next_steps': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      inner += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 1.5rem">`;
+      (c.cards || []).forEach(card => {
+        inner += `<div style="text-align: center; padding: 1.5rem"><div style="font-size: 2rem; margin-bottom: 0.75rem">${card.icon || ''}</div><h3 style="font-weight: 700; margin-bottom: 0.5rem">${card.title}</h3><p style="${typ.body}; opacity: 0.7">${card.body}</p></div>`;
+      });
+      inner += '</div>';
+      break;
+    }
+    case 'what_you_get': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      inner += `<div style="margin-top: 1.5rem">`;
+      (c.items || []).forEach(it => {
+        inner += `<div style="display:flex;align-items:flex-start;padding:1rem 0;border-bottom:1px solid #f0f0f0"><div style="flex:1"><strong style="font-size:1.05rem">${it.title}</strong><p style="${typ.body};opacity:0.7;margin-top:0.25rem">${it.description}</p></div></div>`;
+      });
+      inner += '</div>';
+      break;
+    }
+    case 'offer_box': {
+      inner = `<div style="text-align:center">`;
+      if (c.headline) inner += `<h2 style="${typ.headline}">${c.headline}</h2>`;
+      if (c.body) inner += `<p style="${typ.body}; margin-top:0.5rem">${c.body}</p>`;
+      if (c.bullets && c.bullets.length) inner += `<ul style="list-style:none;padding:0;margin:1rem 0">${c.bullets.map(b => `<li style="padding:0.5rem 0">✅ ${b}</li>`).join('')}</ul>`;
+      if (c.cta && s.button) inner += `<div style="margin-top:1.5rem"><a href="${s.button.url||'#'}" style="${buttonToCSS(s.button)}">${c.cta}</a></div>`;
+      if (c.ctaSubtext) inner += `<p style="font-size:0.8rem;opacity:0.6;margin-top:0.5rem">${c.ctaSubtext}</p>`;
+      inner += '</div>';
+      break;
+    }
+    case 'order_summary': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      inner += '<div style="margin-top:1rem">';
+      (c.items || []).forEach(it => {
+        inner += `<div style="display:flex;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid #e5e7eb"><span>${it.title}</span><span style="font-weight:600">${it.description}</span></div>`;
+      });
+      if (c.body) inner += `<div style="display:flex;justify-content:space-between;padding:1rem 0;font-weight:800;font-size:1.2rem">${c.body}</div>`;
+      inner += '</div>';
+      break;
+    }
+    case 'checkout_form':
+    case 'opt_in_form': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      if (c.body) inner += `<p style="${typ.body};margin-top:0.5rem;opacity:0.7">${c.body}</p>`;
+      inner += `<div style="margin-top:1.5rem;padding:1.5rem;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb">`;
+      if (block.blockType === 'opt_in_form') {
+        inner += `<div style="margin-bottom:0.75rem"><input type="email" placeholder="Your email address" style="width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem" disabled /></div>`;
+      } else {
+        inner += `<div style="margin-bottom:0.75rem"><input placeholder="Full Name" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px" disabled /></div>`;
+        inner += `<div style="margin-bottom:0.75rem"><input placeholder="Email" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px" disabled /></div>`;
+        inner += `<div style="margin-bottom:0.75rem"><input placeholder="Card Number" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px" disabled /></div>`;
+      }
+      if (c.cta && s.button) inner += `<a href="${s.button.url||'#'}" style="${buttonToCSS({...s.button, width:'full'})}">${c.cta}</a>`;
+      inner += '</div>';
+      if (c.ctaSubtext) inner += `<p style="text-align:center;font-size:0.8rem;opacity:0.5;margin-top:0.75rem">${c.ctaSubtext}</p>`;
+      break;
+    }
+    case 'trust_note':
+      inner = `<p style="${typ.body};opacity:0.5">${c.body || ''}</p>`;
+      break;
+    case 'no_thanks_link':
+      inner = `<div style="text-align:center">`;
+      if (c.body) inner += `<p style="${typ.body};opacity:0.5;margin-bottom:0.5rem">${c.body}</p>`;
+      if (c.cta) inner += `<a href="#" style="color:${s.section.accentColor};font-size:0.85rem;text-decoration:underline">${c.cta}</a>`;
+      inner += '</div>';
+      break;
+    case 'access_button': {
+      const btn = s.button || DEFAULT_BUTTON_STYLE;
+      inner = `<div style="text-align:center"><a href="${btn.url||'#'}" style="${buttonToCSS({...btn, size:'large'})}">${c.cta || btn.text}</a></div>`;
+      if (c.ctaSubtext) inner += `<p style="text-align:center;font-size:0.8rem;opacity:0.5;margin-top:0.75rem">${c.ctaSubtext}</p>`;
+      break;
+    }
+    case 'email_cards': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      inner += '<div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:1rem">';
+      (c.cards || []).forEach((card, i) => {
+        inner += `<div style="display:flex;align-items:flex-start;gap:1rem;padding:1rem;border:1px solid #e5e7eb;border-radius:12px;background:#fff"><div style="flex-shrink:0;width:40px;height:40px;border-radius:50%;background:${s.section.accentColor};color:white;display:flex;align-items:center;justify-content:center;font-weight:700">${card.icon || (i+1)}</div><div><strong>${card.title}</strong><p style="${typ.body};opacity:0.7;margin-top:0.25rem">${card.body}</p></div></div>`;
+      });
+      inner += '</div>';
+      break;
+    }
+    case 'timeline': {
+      inner = c.headline ? `<h2 style="${typ.headline}">${c.headline}</h2>` : '';
+      inner += '<div style="margin-top:1.5rem;position:relative;padding-left:2rem">';
+      inner += `<div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:${s.section.accentColor};opacity:0.3"></div>`;
+      (c.items || []).forEach(it => {
+        inner += `<div style="position:relative;padding-bottom:1.5rem"><div style="position:absolute;left:-2rem;top:2px;width:16px;height:16px;border-radius:50%;background:${s.section.accentColor}"></div><strong>${it.title}</strong><p style="${typ.body};opacity:0.7;margin-top:0.25rem">${it.description}</p></div>`;
       });
       inner += '</div>';
       break;

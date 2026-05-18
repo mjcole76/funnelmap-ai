@@ -23,7 +23,8 @@ import { useCopyGeneration } from '../hooks/useCopyGeneration';
 import { useQualityReport } from '../hooks/useQualityReport';
 import { useFunnelGeneration } from '../hooks/useFunnelGeneration';
 import { useTemplateManager } from '../hooks/useTemplateManager';
-import { generateCopy } from '../lib/copyTemplates';
+import { usePageEditor } from '../hooks/usePageEditor';
+import { useExportManager } from '../hooks/useExportManager';
 import { v4 as uuidv4 } from 'uuid';
 
 function FunnelMapInner() {
@@ -47,7 +48,7 @@ function FunnelMapInner() {
   const [showRewriteModal, setShowRewriteModal] = useState(false);
   const [isGeneratingFullCopy, setIsGeneratingFullCopy] = useState(false);
   const [showQualityReport, setShowQualityReport] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
+  // Export modal state managed by useExportManager hook
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
 
   // ═══════ HOOKS ═══════
@@ -70,8 +71,13 @@ function FunnelMapInner() {
 
   const {
     showTemplateBuilder, templateBuilderNode, openTemplateBuilder, closeTemplateBuilder, saveLayout,
-    showPageEditor, pageEditorNode, openPageEditor, closePageEditor, savePageEdit,
   } = useTemplateManager(nodes, setNodes as any, setSaveStatus, saveCopyForNode, saveLayoutForNode, loadCopyForNode);
+
+  const {
+    showPageEditor, pageEditorNode, openPageEditor, closePageEditor, savePageEdit, regenerateFromEditor,
+  } = usePageEditor(nodes, setNodes as any, setSaveStatus, saveCopyForNode, loadCopyForNode, regenerateForNode);
+
+  const { showExportModal, openExportModal, closeExportModal } = useExportManager();
 
   // ═══════ EDGE/NODE CHANGE HANDLERS ═══════
   const onNodesChange = useCallback((changes: NodeChange[]) => { onNodesChangeCore(changes); setSaveStatus('unsaved'); }, [onNodesChangeCore]);
@@ -176,7 +182,7 @@ function FunnelMapInner() {
         onGenerate={handleGenerate}
         funnelContext={funnelContext}
         setFunnelContext={(ctx) => { setFunnelContext(ctx); setSaveStatus('unsaved'); }}
-        onExportFunnel={() => setShowExportModal(true)}
+        onExportFunnel={openExportModal}
         onAutoArrange={handleAutoArrange}
         onResetLayout={handleResetLayout}
         isSettingsOpen={isSettingsOpen}
@@ -237,7 +243,7 @@ function FunnelMapInner() {
       <CopyQualityReport isOpen={showQualityReport} onClose={() => setShowQualityReport(false)} nodes={nodes} funnelContext={funnelContext}
         onFixIssue={handleFixIssue} onFixAllCritical={handleFixAllCritical} onFixAllWarnings={handleFixAllWarnings} onRerunQA={handleRerunQA} onEditNode={handleEditNode} />
 
-      <ExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} nodes={nodes} edges={edges} funnelContext={funnelContext} />
+      <ExportModal isOpen={showExportModal} onClose={closeExportModal} nodes={nodes} edges={edges} funnelContext={funnelContext} />
       <TemplateLibrary isOpen={showTemplateLibrary} onClose={() => setShowTemplateLibrary(false)} onLoadTemplate={handleLoadTemplate} currentNodes={nodes} currentEdges={edges} />
 
       <TemplateBuilder isOpen={showTemplateBuilder} onClose={closeTemplateBuilder}
@@ -248,7 +254,7 @@ function FunnelMapInner() {
       <PageEditor isOpen={showPageEditor} onClose={closePageEditor}
         nodeId={pageEditorNode?.id || ''} nodeTitle={(pageEditorNode?.data?.title as string) || 'Untitled'}
         stepType={(pageEditorNode?.data?.type as string) || 'Sales Page'} copyData={pageEditorNode?.data?.copy || null}
-        onSave={savePageEdit} onRegenerate={regenerateForNode} onPreview={(id) => { closePageEditor(); setPreviewNodeId(id); }} />
+        onSave={savePageEdit} onRegenerate={regenerateFromEditor} onPreview={(id) => { closePageEditor(); setPreviewNodeId(id); }} />
     </div>
   );
 }

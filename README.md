@@ -129,24 +129,41 @@ Two template systems:
 
 ```
 src/
-  app/page.tsx          — Main page, layout + hook wiring (slim)
-  hooks/                — Custom hooks for state management
-    useFunnelStorage    — localStorage persistence
-    useCopyGeneration   — Copy generation + layout-aware gen
-    useQualityReport    — QA fix management
-    useFunnelGeneration — Funnel creation + auto-arrange
-    useTemplateManager  — Template Builder + Page Editor state
-  types/                — Shared TypeScript types
-    funnel.ts           — FunnelContext, FunnelNodeData
-    copy.ts             — GeneratedCopy, CopySection
-    template.ts         — PlacedBlock, BlockStyles, SavedTemplate
-    qa.ts               — QualityIssue, FixResult, TemplateQA
+  app/page.tsx            — Main page, layout + hook wiring (~260 lines)
+  hooks/                  — Custom hooks for state management
+    useFunnelStorage.ts   — localStorage persistence, auto-save
+    useCopyGeneration.ts  — Copy generation + layout-aware gen
+    useQualityReport.ts   — QA fix management
+    useFunnelGeneration.ts — Funnel creation from brief + auto-arrange
+    useTemplateManager.ts — Template Builder state
+    usePageEditor.ts      — Page Editor state
+    useExportManager.ts   — Export modal state
+  types/                  — Shared TypeScript types
+    funnel.ts             — FunnelContext, FunnelNodeData, FunnelStepType, FunnelTemplate
+    copy.ts               — GeneratedCopy, CopySection, ParsedCopy
+    template.ts           — PlacedBlock, BlockStyles, SavedTemplate
+    qa.ts                 — QualityIssue, FixResult, TemplateQualityIssue
+    export.ts             — ExportFormat, ExportFile, ExportOptions
   lib/
-    copyTemplates.ts    — Copy generation engine
-    templateBlocks.ts   — Block definitions, styles, HTML rendering
-    qaFixEngine.ts      — Per-issue fix logic
-    templateQA.ts       — Template structural quality checks
-  components/           — UI components
+    copyTemplates.ts      — Copy generation engine
+    templateBlocks.ts     — Block definitions, styles, HTML rendering
+    qaFixEngine.ts        — Per-issue fix logic
+    templateQA.ts         — Template structural quality checks
+  components/             — UI components
+__tests__/                — Vitest test suite
+  copyTemplates.test.ts   — Copy generation tests
+  templateBlocks.test.ts  — Block + template save/load tests
+  templateQA.test.ts      — Template quality checks
+```
+
+### Scripts
+
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build (static export)
+npm run test         # Run all tests
+npm run test:watch   # Run tests in watch mode
+npm run check        # Lint + test + build (smoke test)
 ```
 
 ## Known Limitations

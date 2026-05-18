@@ -1,6 +1,24 @@
 import { Node, Edge } from '@xyflow/react';
 
 /**
+ * All supported funnel step types.
+ */
+export type FunnelStepType =
+  | 'Landing Page'
+  | 'Sales Page'
+  | 'Checkout'
+  | 'Order Bump'
+  | 'Upsell'
+  | 'Downsell'
+  | 'Thank You Page'
+  | 'Email Follow-up'
+  | 'Webinar'
+  | 'Survey'
+  | 'Application Page'
+  | 'Booking Page'
+  | 'Opt-in Page';
+
+/**
  * Core context that drives copy generation and funnel behavior.
  * Filled by the user via the Offer Brief / Settings panel.
  */
@@ -61,6 +79,28 @@ export type FunnelNode = Node<FunnelNodeData>;
 export type FunnelEdge = Edge;
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
+
+/**
+ * A pre-built funnel template (used in Template Library).
+ */
+export interface FunnelTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  steps: Array<{
+    type: string;
+    title: string;
+    template: string;
+    buttonText?: string;
+    relativePosition: { x: number; y: number };
+  }>;
+  edges: Array<{
+    sourceIdx: number;
+    targetIdx: number;
+    label: string;
+  }>;
+}
 
 // Re-export for convenience
 import type { GeneratedCopy } from './copy';

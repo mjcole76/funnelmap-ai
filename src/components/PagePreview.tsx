@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Check, Shield, Lock, Play, Star, Calendar, Zap, ChevronRight, ArrowRight } from 'lucide-react';
 import { STEP_TYPES } from './Sidebar';
+import { PlacedBlock, blockToHTML } from '../lib/templateBlocks';
 
 interface PagePreviewProps {
   isOpen: boolean;
@@ -19,7 +20,9 @@ interface PagePreviewProps {
     price: string;
     problem: string;
     goal: string;
+    pageStyle?: string;
   };
+  layout?: PlacedBlock[];
 }
 
 interface ParsedSections {
@@ -155,7 +158,7 @@ function parseCopyContent(copyData: any): ParsedSections {
   return result;
 }
 
-export default function PagePreview({ isOpen, onClose, nodeId, stepType, title, previewTemplate, headline: nodeHeadline, buttonText: nodeButtonText, price: nodePrice, funnelSettings }: PagePreviewProps) {
+export default function PagePreview({ isOpen, onClose, nodeId, stepType, title, previewTemplate, headline: nodeHeadline, buttonText: nodeButtonText, price: nodePrice, funnelSettings, layout }: PagePreviewProps) {
   const [copyData, setCopyData] = useState<any>(null);
 
   useEffect(() => {
@@ -189,6 +192,27 @@ export default function PagePreview({ isOpen, onClose, nodeId, stepType, title, 
   const Btn = ({ text, c, xl }: { text: string; c?: string; xl?: boolean }) => (
     <button className={`px-8 ${xl ? 'py-5 text-xl' : 'py-4 text-lg'} rounded-xl font-bold text-white shadow-xl hover:scale-[1.02] transition-transform`} style={{ backgroundColor: c || color }}>{text}</button>
   );
+
+  // If we have a styled layout, render using blockToHTML for full visual fidelity
+  const hasStyledLayout = layout && layout.length > 0 && layout[0].styles;
+
+  if (hasStyledLayout) {
+    const blocksHTML = layout!.map(b => blockToHTML(b)).join('');
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-black/80" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="flex items-center justify-between px-6 py-3 bg-gray-900 text-white">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+            <h3 className="font-semibold text-sm">{title} — {stepType}</h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto bg-white">
+          <div dangerouslySetInnerHTML={{ __html: blocksHTML }} />
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     // ═══════════════ EMPTY STATE ═══════════════
@@ -814,6 +838,17 @@ export default function PagePreview({ isOpen, onClose, nodeId, stepType, title, 
     );
   };
 
+  const getStyleClasses = () => {
+    switch (funnelSettings.pageStyle) {
+      case 'Bold Direct Response': return 'theme-bold-dr font-sans';
+      case 'Clean SaaS': return 'theme-clean-saas font-inter bg-slate-50';
+      case 'Editorial Letter': return 'theme-editorial font-serif max-w-3xl mx-auto';
+      case 'Compact Tripwire': return 'theme-compact text-center';
+      case 'Premium Minimal': return 'theme-premium tracking-wide font-light';
+      default: return '';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="relative w-full max-w-4xl h-[90vh] flex flex-col bg-transparent animate-in fade-in zoom-in duration-200">
@@ -826,7 +861,7 @@ export default function PagePreview({ isOpen, onClose, nodeId, stepType, title, 
             <div className="w-16"></div>
           </div>
           {/* Page Content */}
-          <div className="flex-1 overflow-y-auto bg-white">
+          <div className={`flex-1 overflow-y-auto bg-white ${getStyleClasses()}`}>
             <div className="min-h-full px-6 py-12 md:px-12 md:py-16">{renderContent()}</div>
           </div>
         </div>

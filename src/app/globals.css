@@ -33,3 +33,93 @@ body {
 .node-pop-in {
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+/* Page Style Overrides */
+
+/* Style 1: Bold Direct Response */
+.theme-bold-dr h1 {
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+.theme-bold-dr button {
+  background-color: #ef4444 !important; /* Force red buttons for DR */
+  text-transform: uppercase;
+  border-bottom: 4px solid #b91c1c;
+}
+.theme-bold-dr .bg-gradient-to-br {
+  background: #111827 !important; /* Pure dark hero */
+}
+
+/* Style 2: Clean SaaS */
+.theme-clean-saas {
+  color: #334155;
+}
+.theme-clean-saas h1 {
+  color: #0f172a !important;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.theme-clean-saas .bg-gradient-to-br {
+  background: #ffffff !important;
+}
+.theme-clean-saas .text-white {
+  color: #0f172a !important;
+}
+.theme-clean-saas button {
+  background-color: #2563eb !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+/* Style 3: Editorial Letter */
+.theme-editorial h1 {
+  font-family: Georgia, serif;
+  font-weight: normal;
+  font-style: italic;
+  color: #1a1a1a !important;
+}
+.theme-editorial p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #333;
+}
+.theme-editorial .bg-gradient-to-br {
+  background: transparent !important;
+}
+.theme-editorial button {
+  border-radius: 0 !important;
+  background-color: #000 !important;
+}
+
+/* Style 4: Compact Tripwire */
+.theme-compact .py-20 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.theme-compact h1 {
+  font-size: 2.5rem !important;
+}
+.theme-compact button {
+  background-color: #10b981 !important;
+}
+
+/* Style 5: Premium Minimal */
+.theme-premium h1, .theme-premium h2, .theme-premium h3 {
+  font-weight: 300 !important;
+  letter-spacing: 0.05em;
+}
+.theme-premium .bg-gradient-to-br {
+  background: #fafafa !important;
+}
+.theme-premium .text-white {
+  color: #171717 !important;
+}
+.theme-premium button {
+  background-color: #171717 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400 !important;
+}
+

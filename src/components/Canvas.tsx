@@ -29,6 +29,8 @@ interface CanvasProps {
   onEditNode: (node: Node) => void;
   onGenerateCopy: (node: Node) => void;
   onPreviewNode: (nodeId: string) => void;
+  onBuildTemplate: (nodeId: string) => void;
+  onEditPage: (nodeId: string) => void;
   setSaveStatus: (status: 'saved' | 'saving' | 'unsaved') => void;
 }
 
@@ -43,6 +45,8 @@ export default function Canvas({
   onEditNode,
   onGenerateCopy,
   onPreviewNode,
+  onBuildTemplate,
+  onEditPage,
   setSaveStatus
 }: CanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -129,7 +133,9 @@ export default function Canvas({
       },
       onAddNext: (type: string) => handleAddNext(node, type),
       onGenerateCopy: () => onGenerateCopy(node),
-      onPreview: () => onPreviewNode(node.id)
+      onPreview: () => onPreviewNode(node.id),
+      onBuildTemplate: () => onBuildTemplate(node.id),
+      onEditPage: () => onEditPage(node.id)
     }
   }));
 

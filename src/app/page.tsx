@@ -11,10 +11,14 @@ import SettingsDrawer from '../components/SettingsDrawer';
 import PreviewModal from '../components/PreviewModal';
 import PagePreview from '../components/PagePreview';
 import CopyPanel from '../components/CopyPanel';
-import CopyQualityReport from '../components/CopyQualityReport';
+import CopyQualityReport, { QualityIssue, analyzeCopy } from '../components/CopyQualityReport';
+import { fixIssue, fixAllIssuesOfSeverity } from '../lib/qaFixEngine';
 import ExportModal from '../components/ExportModal';
 import TemplateLibrary, { FunnelTemplate } from '../components/TemplateLibrary';
-import { FunnelContext, generateCopy } from '../lib/copyTemplates';
+import { FunnelContext, generateCopy, generateCopyFromLayout } from '../lib/copyTemplates';
+import TemplateBuilder from '../components/TemplateBuilder';
+import PageEditor from '../components/PageEditor';
+import { PlacedBlock, layoutFromStepType, getBlockDef } from '../lib/templateBlocks';
 
 const STORAGE_KEY = 'funnelmap-ai-state';
 
@@ -78,6 +82,10 @@ function FunnelMapInner() {
   const [showQualityReport, setShowQualityReport] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
+  const [templateBuilderNode, setTemplateBuilderNode] = useState<Node | null>(null);
+  const [showPageEditor, setShowPageEditor] = useState(false);
+  const [pageEditorNode, setPageEditorNode] = useState<Node | null>(null);
 
   const [funnelContext, setFunnelContext] = useState<FunnelContext>({
     funnelName: 'My Funnel',
@@ -86,7 +94,8 @@ function FunnelMapInner() {
     price: '',
     problem: '',
     goal: '',
-    offerType: 'Low-ticket ($7-$47)'
+    offerType: 'Low-ticket ($7-$47)',
+    pageStyle: 'Bold Direct Response'
   });
 
   // Load from localStorage
@@ -503,16 +512,138 @@ const newNodes: Node[] = [];
     setSaveStatus('unsaved');
   };
 
-  const handleFixNode = (nodeId: string) => {
+  // ═══════════════ QA FIX HANDLERS ═══════════════
+
+  const handleFixIssue = (issue: QualityIssue) => {
+    const node = nodes.find(n => n.id === issue.nodeId);
+    if (!node) return;
+
+    // Get current copy
+    let copyData: any = null;
+    const saved = localStorage.getItem(`funnel-copy-${issue.nodeId}`);
+    if (saved) { try { copyData = JSON.parse(saved); } catch { /* ignore */ } }
+    if (!copyData) copyData = node.data.copy;
+
+    const context = buildCopyContext(node);
+    const fixedCopy = fixIssue(issue, copyData, context, (node.data.type as string) || 'Sales Page');
+
+    if (fixedCopy) {
+      localStorage.setItem(`funnel-copy-${issue.nodeId}`, JSON.stringify(fixedCopy));
+      setNodes(nds => nds.map(n => n.id === issue.nodeId ? { ...n, data: { ...n.data, copy: fixedCopy, _copyUpdated: Date.now() } } : n));
+      setSaveStatus('unsaved');
+    }
+  };
+
+  const handleFixAllCritical = () => {
+    const fixes = fixAllIssuesOfSeverity(nodes, funnelContext as FunnelContext, 'critical', analyzeCopy);
+    fixes.forEach((fixedCopy, nodeId) => {
+      localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(fixedCopy));
+    });
+    setNodes(nds => nds.map(n => {
+      const fixedCopy = fixes.get(n.id);
+      if (fixedCopy) return { ...n, data: { ...n.data, copy: fixedCopy, _copyUpdated: Date.now() } };
+      return n;
+    }));
+    setSaveStatus('unsaved');
+  };
+
+  const handleFixAllWarnings = () => {
+    const fixes = fixAllIssuesOfSeverity(nodes, funnelContext as FunnelContext, 'warning', analyzeCopy);
+    fixes.forEach((fixedCopy, nodeId) => {
+      localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(fixedCopy));
+    });
+    setNodes(nds => nds.map(n => {
+      const fixedCopy = fixes.get(n.id);
+      if (fixedCopy) return { ...n, data: { ...n.data, copy: fixedCopy, _copyUpdated: Date.now() } };
+      return n;
+    }));
+    setSaveStatus('unsaved');
+  };
+
+  const handleRerunQA = () => {
+    // Force re-render of the QA report by toggling
+    setShowQualityReport(false);
+    setTimeout(() => setShowQualityReport(true), 50);
+  };
+
+  const handleEditNode = (nodeId: string, scrollTo?: string) => {
     setShowQualityReport(false);
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
-      const context = buildCopyContext(node);
-      const generated = generateCopy(node.data.type as string, context);
-      localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(generated));
-      setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: generated, _copyUpdated: Date.now() } } : n));
-      setSaveStatus('unsaved');
+      // Open the copy panel for this node
+      setCopyPanelNode(node);
     }
+  };
+
+  // ═══════════════════ TEMPLATE BUILDER HANDLERS ═══════════════════
+
+  const handleOpenTemplateBuilder = (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setTemplateBuilderNode(node);
+      setShowTemplateBuilder(true);
+    }
+  };
+
+  const handleSaveLayout = (nodeId: string, layout: PlacedBlock[]) => {
+    localStorage.setItem(`funnel-layout-${nodeId}`, JSON.stringify(layout));
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, layout, _layoutUpdated: Date.now() } } : n));
+    setSaveStatus('unsaved');
+  };
+
+  const handleGenerateCopyFromLayout = (nodeId: string, layout: PlacedBlock[]) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const context = buildCopyContext(node);
+    // Use layout-aware generator that produces section per block
+    const generatedCopy = generateCopyFromLayout(node.data.type as string, context, layout);
+    localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(generatedCopy));
+    localStorage.setItem(`funnel-layout-${nodeId}`, JSON.stringify(layout));
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: generatedCopy, layout, _copyUpdated: Date.now() } } : n));
+    setSaveStatus('unsaved');
+    setShowTemplateBuilder(false);
+  };
+
+  // ═══════════════════ PAGE EDITOR HANDLERS ═══════════════════
+
+  const handleOpenPageEditor = (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    // Get copy from localStorage or node data
+    let copyData = node.data.copy;
+    const saved = localStorage.getItem(`funnel-copy-${nodeId}`);
+    if (saved) { try { copyData = JSON.parse(saved); } catch { /* ignore */ } }
+    if (!copyData) return; // No copy to edit
+    setPageEditorNode({ ...node, data: { ...node.data, copy: copyData } });
+    setShowPageEditor(true);
+  };
+
+  const handleSavePageEdit = (nodeId: string, editedCopy: any) => {
+    localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(editedCopy));
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: editedCopy, _copyUpdated: Date.now() } } : n));
+    setSaveStatus('unsaved');
+  };
+
+  const handleRegenerateFromEditor = (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const context = buildCopyContext(node);
+    // Check if there's a saved layout
+    const savedLayout = localStorage.getItem(`funnel-layout-${nodeId}`);
+    let generatedCopy;
+    if (savedLayout) {
+      try {
+        const layout = JSON.parse(savedLayout);
+        generatedCopy = generateCopyFromLayout(node.data.type as string, context, layout);
+      } catch {
+        generatedCopy = generateCopy(node.data.type as string, context);
+      }
+    } else {
+      generatedCopy = generateCopy(node.data.type as string, context);
+    }
+    localStorage.setItem(`funnel-copy-${nodeId}`, JSON.stringify(generatedCopy));
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, copy: generatedCopy, _copyUpdated: Date.now() } } : n));
+    setSaveStatus('unsaved');
   };
 
   if (!isLoaded) return <div className="h-screen w-full bg-white flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>;
@@ -555,6 +686,8 @@ const newNodes: Node[] = [];
             onEditNode={setEditingNode}
             onGenerateCopy={handleGenerateCopy}
             onPreviewNode={(nodeId: string) => setPreviewNodeId(nodeId)}
+            onBuildTemplate={handleOpenTemplateBuilder}
+            onEditPage={handleOpenPageEditor}
             setSaveStatus={setSaveStatus}
           />
         </div>
@@ -587,6 +720,7 @@ const newNodes: Node[] = [];
           buttonText={nodes.find(n => n.id === previewNodeId)?.data?.buttonText as string}
           price={nodes.find(n => n.id === previewNodeId)?.data?.price as string}
           funnelSettings={funnelContext as any}
+          layout={nodes.find(n => n.id === previewNodeId)?.data?.layout as any}
         />
       )}
 
@@ -634,7 +768,11 @@ const newNodes: Node[] = [];
         onClose={() => setShowQualityReport(false)}
         nodes={nodes}
         funnelContext={funnelContext}
-        onFixNode={handleFixNode}
+        onFixIssue={handleFixIssue}
+        onFixAllCritical={handleFixAllCritical}
+        onFixAllWarnings={handleFixAllWarnings}
+        onRerunQA={handleRerunQA}
+        onEditNode={handleEditNode}
       />
 
       <ExportModal
@@ -651,6 +789,29 @@ const newNodes: Node[] = [];
         onLoadTemplate={handleLoadTemplate}
         currentNodes={nodes}
         currentEdges={edges}
+      />
+
+      <TemplateBuilder
+        isOpen={showTemplateBuilder}
+        onClose={() => setShowTemplateBuilder(false)}
+        nodeId={templateBuilderNode?.id || ''}
+        nodeTitle={(templateBuilderNode?.data?.title as string) || 'Untitled'}
+        stepType={(templateBuilderNode?.data?.type as string) || 'Sales Page'}
+        currentLayout={(templateBuilderNode?.data?.layout as PlacedBlock[]) || null}
+        onSaveLayout={handleSaveLayout}
+        onGenerateCopy={handleGenerateCopyFromLayout}
+      />
+
+      <PageEditor
+        isOpen={showPageEditor}
+        onClose={() => setShowPageEditor(false)}
+        nodeId={pageEditorNode?.id || ''}
+        nodeTitle={(pageEditorNode?.data?.title as string) || 'Untitled'}
+        stepType={(pageEditorNode?.data?.type as string) || 'Sales Page'}
+        copyData={pageEditorNode?.data?.copy || null}
+        onSave={handleSavePageEdit}
+        onRegenerate={handleRegenerateFromEditor}
+        onPreview={(id) => { setShowPageEditor(false); setPreviewNodeId(id); }}
       />
     </div>
   );

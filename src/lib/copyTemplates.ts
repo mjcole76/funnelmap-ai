@@ -17,11 +17,14 @@ export interface FunnelContext {
   buttonText?: string;
   notes?: string;
   previewTemplate?: string;
+  pageStyle?: string;
 }
 
 export interface GeneratedCopy {
   headline: string;
   sections: Array<{ title: string; content: string }>;
+  cta?: string;
+  button?: string;
 }
 
 // --- BLOCKED PHRASES GUARDRAIL ---
@@ -714,4 +717,183 @@ export function generateCopy(stepType: string, context: FunnelContext): Generate
       { title: 'Generated Funnel Copy', content: bodyContent }
     ]
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT-AWARE COPY GENERATION
+// Generates copy per-block based on the Template Builder layout
+// ═══════════════════════════════════════════════════════════════
+
+export interface LayoutBlock {
+  instanceId: string;
+  blockType: string;
+  content: any;
+}
+
+export function generateCopyFromLayout(stepType: string, context: FunnelContext, layout: LayoutBlock[]): GeneratedCopy {
+  const {
+    productName = 'Your Product',
+    audience = 'your customers',
+    price = '$29',
+    problem = 'the core challenge',
+    goal = 'achieve better results',
+    desiredOutcome = '',
+    whatsIncluded = '',
+    whyNow = '',
+    buyerObjection = '',
+  } = context;
+
+  if (!hasRealContext(context)) {
+    return {
+      headline: `Set up your Offer Brief to generate copy`,
+      sections: [{ title: 'Fill in Offer Brief', content: 'Open Settings and fill in your product details to generate real copy.' }]
+    };
+  }
+
+  const benefit = problemToBenefit(problem);
+  const pain = corePain(problem);
+  const short = shortProduct(productName);
+  const singular = singularAudience(audience);
+
+  let headline = '';
+  const sections: Array<{ title: string; content: string }> = [];
+  let cta = '';
+
+  for (const block of layout) {
+    switch (block.blockType) {
+      case 'hero': {
+        headline = `Stop Struggling With ${cap(pain)} — ${productName} Makes It Easy`;
+        if (stepType === 'Upsell') headline = `Wait — Upgrade to ${productName} Pro`;
+        if (stepType === 'Downsell') headline = `Here's a Lighter Option — ${short} Essentials`;
+        if (stepType === 'Thank You Page') headline = `You're In! Here's What Happens Next`;
+        if (stepType === 'Landing Page') headline = `The Free Guide That Shows ${cap(audience)} How to ${cap(benefit)}`;
+        sections.push({
+          title: 'Hero',
+          content: `${headline}\n\nFinally — a straightforward way for ${audience} to ${benefit}. No fluff, no theory, just the exact steps that work.`
+        });
+        break;
+      }
+      case 'problem': {
+        sections.push({
+          title: 'The Problem',
+          content: `If you're a ${singular} dealing with ${problem}, you already know how exhausting it is.\n\n• You've tried the "usual advice" — it doesn't work for your situation\n• You've wasted hours (or money) on solutions that overpromise\n• You're stuck in the same place you were 6 months ago\n\nIt's not your fault. Most approaches weren't designed for ${audience} like you.`
+        });
+        break;
+      }
+      case 'solution': {
+        sections.push({
+          title: 'The Solution',
+          content: `${productName} was built specifically for ${audience} who are tired of ${pain}.\n\nInstead of generic advice, you get a focused system designed to help you ${benefit} — without the overwhelm.\n\nThis is not another course or information dump. It's a practical tool you can use today.`
+        });
+        break;
+      }
+      case 'benefits': {
+        const outcome = desiredOutcome || benefit;
+        sections.push({
+          title: 'What You\'ll Get',
+          content: `Here's what changes when you use ${short}:\n\n✓ ${cap(outcome)} — without guessing what to do next\n✓ Save hours every week with a proven system\n✓ Clear, step-by-step guidance that actually works\n✓ No technical skills required — built for ${audience}\n✓ Results you can see within your first week`
+        });
+        break;
+      }
+      case 'features': {
+        const included = whatsIncluded || `Complete ${productName} system, Quick-start guide, Implementation checklist, Lifetime access`;
+        const items = included.split(',').map(i => i.trim()).filter(Boolean);
+        sections.push({
+          title: 'What\'s Inside',
+          content: `Everything you need, nothing you don't:\n\n${items.map(i => `📦 ${i}`).join('\n')}\n\nTotal value: Far more than ${price}. Your investment today: just ${price}.`
+        });
+        break;
+      }
+      case 'social_proof': {
+        sections.push({
+          title: 'What Others Are Saying',
+          content: `"I was skeptical, but ${short} actually delivered. Within a week I was already seeing progress."\n— Verified ${singular}\n\n"I've tried other solutions for ${pain}. This is the first one that made sense for someone like me."\n— ${cap(audience)} member`
+        });
+        break;
+      }
+      case 'guarantee': {
+        sections.push({
+          title: 'Our Guarantee',
+          content: `Try ${productName} risk-free.\n\nIf it doesn't help you ${benefit} within 30 days, just let us know. Full refund, no questions asked, no hard feelings.\n\nWe're confident this works because it was built specifically for ${audience} facing exactly this problem.`
+        });
+        break;
+      }
+      case 'pricing': {
+        const urgency = whyNow || 'This introductory price won\'t last';
+        sections.push({
+          title: 'Your Investment',
+          content: `Get everything above for just ${price}.\n\n${urgency}.\n\nOne-time payment. Lifetime access. No subscription, no hidden fees.\n\nYou're not just buying a product — you're buying back your time and sanity.`
+        });
+        break;
+      }
+      case 'faq': {
+        const objection = buyerObjection || `whether this is right for ${audience}`;
+        sections.push({
+          title: 'Frequently Asked Questions',
+          content: `**Is this right for me?**\nIf you're a ${singular} struggling with ${pain}, this was built for you.\n\n**How quickly will I see results?**\nMost people see their first win within the first week.\n\n**What if I have questions about ${objection}?**\nWe've got you covered. Reach out anytime and we'll help.\n\n**What if it doesn't work for me?**\n30-day money-back guarantee. Zero risk.`
+        });
+        break;
+      }
+      case 'cta_final': {
+        cta = `Get ${short} — ${price}`;
+        sections.push({
+          title: 'Ready?',
+          content: `You've read this far — that tells me you're serious about solving ${pain}.\n\nThe question isn't whether ${productName} works. It's whether you're ready to stop putting it off.\n\nCTA: ${cta}\n\n30-day guarantee. Instant access. Built for ${audience}.`
+        });
+        break;
+      }
+      case 'urgency': {
+        const reason = whyNow || 'this offer is only available for a limited time';
+        sections.push({
+          title: 'Why Now',
+          content: `Fair warning: ${reason}.\n\nEvery day you wait is another day stuck with ${pain}. ${productName} is ready for you right now.`
+        });
+        break;
+      }
+      case 'bonuses': {
+        sections.push({
+          title: 'Free Bonuses',
+          content: `Order today and you'll also get:\n\n🎁 Bonus #1: Quick-Start Implementation Guide (get results Day 1)\n🎁 Bonus #2: ${productName} Cheat Sheet (one-page reference)\n🎁 Bonus #3: Priority support for your first 30 days\n\nThese bonuses are included free with your purchase today.`
+        });
+        break;
+      }
+      case 'comparison': {
+        sections.push({
+          title: 'Why This Is Different',
+          content: `**Without ${short}:**\n• Still guessing what to do next\n• Wasting time on approaches that don't work\n• Frustrated and stuck\n\n**With ${short}:**\n• Clear roadmap from day one\n• Proven system built for ${audience}\n• Visible progress within a week`
+        });
+        break;
+      }
+      case 'about': {
+        sections.push({
+          title: 'Why We Built This',
+          content: `We built ${productName} because we were tired of seeing ${audience} struggle with ${pain} — and getting nothing but generic advice in return.\n\nThis isn't theory. It's the exact system that works, distilled into something you can use immediately.`
+        });
+        break;
+      }
+      case 'objection_handler': {
+        const objection2 = buyerObjection || 'whether this will work for you';
+        sections.push({
+          title: 'Let\'s Address Your Concern',
+          content: `You might be wondering ${objection2}.\n\nHere's the truth: ${productName} was designed for ${audience} who are exactly where you are right now.\n\nIf you've tried other things and they didn't work, it wasn't because you failed — it was because those solutions weren't built for you.\n\nThis one is.`
+        });
+        break;
+      }
+      default: {
+        // Fallback for any unknown block
+        sections.push({
+          title: block.content?.headline || 'Section',
+          content: block.content?.body || `Content for ${block.blockType}`
+        });
+      }
+    }
+  }
+
+  // Guardrail check
+  if (containsBlockedPhrase(headline)) headline = sanitize(headline);
+  sections.forEach(s => {
+    if (containsBlockedPhrase(s.content)) s.content = sanitize(s.content);
+  });
+
+  return { headline: headline || `Get ${productName} Today`, sections, cta };
 }

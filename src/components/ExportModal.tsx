@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { X, FileText, Code, Database, Download } from 'lucide-react';
+import { blocksToHTML, PlacedBlock } from '../lib/templateBlocks';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ function buildOfferBrief(ctx: any): string {
     `- **Problem:** ${ctx.problem || 'Not set'}`,
     `- **Outcome / Goal:** ${ctx.goal || 'Not set'}`,
     `- **Offer Type:** ${ctx.offerType || 'Not set'}`,
+    `- **Page Style:** ${ctx.pageStyle || 'Bold Direct Response'}`,
     `- **Funnel Name:** ${ctx.funnelName || 'My Funnel'}`,
   ].join('\n');
 }
@@ -82,10 +84,37 @@ function buildMarkdownExport(nodes: any[], edges: any[], ctx: any): string {
 }
 
 function buildHTMLPage(node: any, ctx: any, idx: number): string {
+  // If node has a styled layout, use blocksToHTML for full-fidelity export
+  const layout = node.data.layout as PlacedBlock[] | undefined;
+  if (layout && layout.length > 0 && layout[0].styles) {
+    return blocksToHTML(layout, `${node.data.title || 'Page'} — ${node.data.type || ''}`);
+  }
+
   const copy = getCopyForNode(node);
   const title = node.data.title || 'Page';
   const stepType = node.data.type || '';
   const color = '#3b82f6';
+  
+  const pageStyle = ctx?.pageStyle || 'Bold Direct Response';
+
+  let getStyleCSS = '';
+  switch (pageStyle) {
+    case 'Bold Direct Response':
+      getStyleCSS = 'body { font-family: sans-serif; } .hero { background: #111827 !important; color: white; text-align: center; } h1 { text-transform: uppercase; letter-spacing: -0.02em; } .btn { background: #ef4444 !important; border-bottom: 4px solid #b91c1c; text-transform: uppercase; }';
+      break;
+    case 'Clean SaaS':
+      getStyleCSS = 'body { font-family: "Inter", sans-serif; background: #f8fafc; color: #334155; } .hero { background: white !important; color: #0f172a !important; text-align: center; border-bottom: 1px solid #e2e8f0; } .hero h1 { color: #0f172a !important; font-weight: 800; letter-spacing: -0.05em; } .btn { background: #2563eb !important; border-radius: 6px; }';
+      break;
+    case 'Editorial Letter':
+      getStyleCSS = 'body { font-family: Georgia, serif; color: #333; line-height: 1.8; max-width: 800px; margin: auto; } .hero { background: transparent !important; color: #1a1a1a !important; text-align: left; padding: 20px 20px 40px !important; } .hero h1 { font-style: italic; color: #1a1a1a !important; font-weight: normal; } .btn { background: #000 !important; border-radius: 0; }';
+      break;
+    case 'Compact Tripwire':
+      getStyleCSS = 'body { font-family: sans-serif; text-align: center; } .hero { padding: 3rem 1rem !important; } .hero h1 { font-size: 2.5rem !important; } .btn { background: #10b981 !important; }';
+      break;
+    case 'Premium Minimal':
+      getStyleCSS = 'body { font-family: sans-serif; font-weight: 300; background: #fafafa; } .hero { background: #fafafa !important; color: #171717 !important; text-align: center; } .hero h1, h2, h3 { font-weight: 300; letter-spacing: 0.05em; color: #171717 !important; } .btn { background: #171717 !important; color: white; border-radius: 0; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 400; }';
+      break;
+  }
 
   let bodyHTML = '';
   if (!copy) {
@@ -96,9 +125,9 @@ function buildHTMLPage(node: any, ctx: any, idx: number): string {
     const sections = copy.sections || [];
     const bodyText = copy.body || '';
 
-    bodyHTML += `<div style="background:linear-gradient(135deg,#1e293b,#312e81);color:white;padding:60px 20px;text-align:center">`;
+    bodyHTML += `<div class="hero" style="background:linear-gradient(135deg,#1e293b,#312e81);color:white;padding:60px 20px;text-align:center">`;
     bodyHTML += `<h1 style="font-size:2.5rem;font-weight:800;margin-bottom:16px">${escapeHTML(headline)}</h1>`;
-    bodyHTML += `<a href="#" style="display:inline-block;background:${color};color:white;padding:16px 32px;border-radius:12px;font-weight:700;font-size:1.1rem;text-decoration:none;margin-top:20px">${escapeHTML(cta)}</a>`;
+    bodyHTML += `<a href="#" class="btn" style="display:inline-block;background:${color};color:white;padding:16px 32px;border-radius:12px;font-weight:700;font-size:1.1rem;text-decoration:none;margin-top:20px">${escapeHTML(cta)}</a>`;
     bodyHTML += `</div>`;
 
     if (sections.length > 0) {
@@ -133,7 +162,7 @@ function buildHTMLPage(node: any, ctx: any, idx: number): string {
     }
 
     bodyHTML += `<div style="background:#f8fafc;padding:40px 20px;text-align:center;border-top:1px solid #e5e7eb">`;
-    bodyHTML += `<a href="#" style="display:inline-block;background:${color};color:white;padding:16px 32px;border-radius:12px;font-weight:700;font-size:1.1rem;text-decoration:none">${escapeHTML(cta)}</a>`;
+    bodyHTML += `<a href="#" class="btn" style="display:inline-block;background:${color};color:white;padding:16px 32px;border-radius:12px;font-weight:700;font-size:1.1rem;text-decoration:none">${escapeHTML(cta)}</a>`;
     bodyHTML += `</div>`;
   }
 
@@ -148,6 +177,7 @@ function buildHTMLPage(node: any, ctx: any, idx: number): string {
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; }
   a { transition: opacity 0.2s; }
   a:hover { opacity: 0.9; }
+  ${getStyleCSS}
 </style>
 </head>
 <body>

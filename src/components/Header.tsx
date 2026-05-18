@@ -45,9 +45,43 @@ export default function Header({
 }: HeaderProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showSettingsModalLocal, setShowSettingsModalLocal] = useState(false);
+  const [showStylePickerModal, setShowStylePickerModal] = useState(false);
   
   const showSettingsModal = setIsSettingsOpen ? isSettingsOpen : showSettingsModalLocal;
   const setShowSettingsModal = setIsSettingsOpen ? setIsSettingsOpen : setShowSettingsModalLocal;
+
+  const PAGE_STYLES = [
+    {
+      id: 'Bold Direct Response',
+      name: 'Bold Direct Response',
+      bestFor: 'Low-ticket digital offers and sprint products.',
+      sections: 'Hero, product stack, proof block, offer box, FAQ, guarantee.'
+    },
+    {
+      id: 'Clean SaaS',
+      name: 'Clean SaaS',
+      bestFor: 'Software tools and AI apps.',
+      sections: 'Hero, app mockup, features, workflow, pricing, FAQ.'
+    },
+    {
+      id: 'Editorial Letter',
+      name: 'Editorial Letter',
+      bestFor: 'Info products, coaching, newsletter-style offers.',
+      sections: 'Personal opening, problem story, new mechanism, offer card, FAQ.'
+    },
+    {
+      id: 'Compact Tripwire',
+      name: 'Compact Tripwire',
+      bestFor: '$7 to $27 offers, quick downloads, beta access.',
+      sections: 'Hero with price, quick benefits, offer stack, guarantee, FAQ.'
+    },
+    {
+      id: 'Premium Minimal',
+      name: 'Premium Minimal',
+      bestFor: 'Higher-ticket simple offers, consulting, service packages.',
+      sections: 'Clean hero, outcome, framework, pricing, FAQ.'
+    }
+  ];
 
   const [formData, setFormData] = useState({
     funnelName: 'My Funnel',
@@ -57,6 +91,7 @@ export default function Header({
     problem: '',
     goal: 'Sell product',
     offerType: 'Low-ticket ($7-$47)',
+    pageStyle: 'Bold Direct Response',
     desiredOutcome: '',
     whatsIncluded: '',
     whyNow: '',
@@ -350,6 +385,23 @@ export default function Header({
                     <option>Urgent and punchy</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Style (Global Funnel Design)</label>
+                  <div className="flex space-x-2">
+                    <select className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={formData.pageStyle || 'Bold Direct Response'} onChange={(e) => setFormData({...formData, pageStyle: e.target.value})}>
+                      {PAGE_STYLES.map(style => (
+                        <option key={style.id} value={style.id}>{style.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowStylePickerModal(true)}
+                      className="px-3 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 text-sm font-medium"
+                    >
+                      Browse Styles
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end space-x-3 pb-2 sticky bottom-0 bg-white border-t border-gray-100 -mx-6 px-6 py-3">
@@ -361,6 +413,51 @@ export default function Header({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Style Picker Modal */}
+      {showStylePickerModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div className="flex items-center space-x-2">
+                <LayoutTemplate className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Choose Global Page Style</h2>
+              </div>
+              <button 
+                onClick={() => setShowStylePickerModal(false)}
+                className="text-gray-400 hover:text-gray-600 rounded-md p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {PAGE_STYLES.map(style => (
+                <div 
+                  key={style.id} 
+                  className={`border rounded-lg p-4 flex flex-col transition-all ${formData.pageStyle === style.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50/50' : 'border-gray-200 hover:border-blue-300 hover:shadow-md'}`}
+                >
+                  <h3 className="font-bold text-gray-900 text-lg mb-1">{style.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3 flex-1"><span className="font-semibold text-gray-700">Best for:</span> {style.bestFor}</p>
+                  <div className="bg-gray-100 p-3 rounded-md mb-4 text-xs text-gray-500 border border-gray-200">
+                    <span className="font-semibold text-gray-600 block mb-1">Sections:</span>
+                    {style.sections}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setFormData({...formData, pageStyle: style.id});
+                      setShowStylePickerModal(false);
+                    }}
+                    className={`w-full py-2 rounded-md font-medium text-sm transition-colors ${formData.pageStyle === style.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  >
+                    {formData.pageStyle === style.id ? 'Selected' : 'Use This Style'}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

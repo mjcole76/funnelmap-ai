@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Edit2, Eye, Trash2, Plus, Wand2, FileText } from 'lucide-react';
+import { Edit2, Eye, Trash2, Plus, Wand2, FileText, Layout } from 'lucide-react';
 import { STEP_TYPES } from './Sidebar';
 import { MiniPreview } from './MiniPreview';
 
@@ -17,6 +17,8 @@ interface FunnelNodeData {
   onAddNext?: (type: string) => void;
   onGenerateCopy?: () => void;
   onPreview?: () => void;
+  onBuildTemplate?: () => void;
+  onEditPage?: () => void;
 }
 
 export default function FunnelNode({ data }: { data: FunnelNodeData }) {
@@ -156,10 +158,23 @@ export default function FunnelNode({ data }: { data: FunnelNodeData }) {
               <><Wand2 className="w-3 h-3 mr-1" />Write</>
             )}
           </button>
+
+          <button 
+            onClick={(e) => { e.stopPropagation(); data.onBuildTemplate?.(); }}
+            className="flex-1 py-1 px-1 text-[10px] font-medium rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 flex items-center justify-center transition-colors"
+            title="Build Template"
+          >
+            <Layout className="w-3 h-3 mr-1" />
+            Layout
+          </button>
           
           <button 
-            onClick={(e) => { e.stopPropagation(); data.onEdit?.(); }}
-            className="flex-1 py-1 px-1 text-[10px] font-medium rounded bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 flex items-center justify-center transition-colors"
+            onClick={(e) => { e.stopPropagation(); hasCopy ? data.onEditPage?.() : data.onEdit?.(); }}
+            className={`flex-1 py-1 px-1 text-[10px] font-medium rounded flex items-center justify-center transition-colors ${
+              hasCopy
+                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
           >
             <Edit2 className="w-3 h-3 mr-1" />
             Edit
